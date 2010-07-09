@@ -8,6 +8,7 @@ class IODriver(t.Thread, HasTraits):
       source and passes it out to the decoding layer. 
   """
   # list of callback functions for the various listeners on this input
+  #_decoder_list = Instance(DecoderList)
   _decoders = List(DataDecoder)
   _wants_to_terminate = False
   name = Str('Input Driver')
@@ -52,12 +53,23 @@ class IODriver(t.Thread, HasTraits):
     self._wants_to_terminate = True
    
   def _register_decoder(self, decoder):
+    #self._decoder_list.add_decoder(decoder)
     self._decoders += [decoder]
     
   def pass_data(self, data):
     """
         Pass data on to the decoding layer.
     """
-    for decoder in self._decoders:
+    for decoder in self._decoders #self._decoder_list.get_decoders():
       decoder._receive_callback(data)
       
+class DecoderList(HasTraits, Handler):
+  _decoders = List(DataDecoder)
+  
+  def get_decoders(self):
+    return self._decoders
+    
+  def add_decoder(self, decoder):
+    self._decoders += [decoder]
+    
+  

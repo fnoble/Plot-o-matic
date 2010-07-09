@@ -18,9 +18,23 @@ from enthought.traits.ui.wx.tree_editor \
     import NewAction, CopyAction, CutAction, \
            PasteAction, DeleteAction, RenameAction
 
-class IODriverList(HasTraits):
-  name = Str('bar')
+class IODriverList(HasTraits, Handler):
+  """
+      Maintains the list of input drivers currently in use and provides
+      facilities to add and remove drivers.
+  """
   io_drivers = List(IODriver)
+  
+  remove_action = Action(name='Remove', action='handler.remove(editor,object)')
+  new_action = Action(name='Add Input Driver', action='handler.new(editor,object)')
+  
+  def remove(self, editor, io_driver_object):
+    io_driver_object.stop()
+    io_driver.remove(io_driver_object)
+    
+  def new(self, editor, root_object):
+    print "Adding IO driver"
+    io_drivers += [IODriver()]
 
 class Project(HasTraits):
   name = Str('foo')
@@ -35,8 +49,7 @@ class Project(HasTraits):
         children  = 'io_drivers',
         label     = '=Input Drivers',
         view      = View(),
-        menu      = Menu(NewAction),
-        add       = [IODriver, td.TestDriver, sf.SimpleFileDriver]
+        menu      = Menu(self.io_driver_list.new_action)
       ),
       TreeNode( 
         node_for  = [IODriver],
@@ -46,7 +59,7 @@ class Project(HasTraits):
         menu      = Menu( 
           NewAction,
           Separator(),
-          DeleteAction,
+          self.io_driver_list.remove_action,
           Separator(),
           RenameAction
         ),
@@ -76,6 +89,7 @@ class Project(HasTraits):
         show_label = False
       )
     ),
+    handler = self.io_driver_list,
     title = 'Plot-o-matic',
     resizable = True,
     width = .7,
