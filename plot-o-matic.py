@@ -5,23 +5,25 @@ import plugins.decoders.null_decoder as nulld
 import inspect as ins
 from io_driver import IODriver
 from data_decoder import DataDecoder
+from variables import Variables
 
 
 from enthought.traits.api \
-    import HasTraits, Str, Regex, List, Instance
+    import HasTraits, Str, Regex, List, Instance, DelegatesTo
 from enthought.traits.ui.api \
     import TreeEditor, TreeNode, View, Item, VSplit, \
-           HGroup, Handler, Group
+           HGroup, Handler, Group, Include, ValueEditor, HSplit
 from enthought.traits.ui.menu \
     import Menu, Action, Separator
 from enthought.traits.ui.wx.tree_editor \
     import NewAction, CopyAction, CutAction, \
            PasteAction, DeleteAction, RenameAction
 
-class IODriverList(HasTraits, Handler):
+class IODriverList(Handler):
   """
       Maintains the list of input drivers currently in use and provides
-      facilities to add and remove drivers.
+      facilities to add and remove drivers (also used as a handler for
+      menu operations).
   """
   io_drivers = List(IODriver)
   
@@ -37,10 +39,9 @@ class IODriverList(HasTraits, Handler):
     io_drivers += [IODriver()]
 
 class Project(HasTraits):
-  name = Str('foo')
   io_driver_list = Instance(IODriverList)
+  variables = Instance(Variables)
   
-  # Tree editor
   tree_editor = TreeEditor(
     nodes = [
       TreeNode( 
@@ -49,7 +50,7 @@ class Project(HasTraits):
         children  = 'io_drivers',
         label     = '=Input Drivers',
         view      = View(),
-        menu      = Menu(self.io_driver_list.new_action)
+        menu      = Menu(IODriverList.new_action)
       ),
       TreeNode( 
         node_for  = [IODriver],
@@ -59,7 +60,7 @@ class Project(HasTraits):
         menu      = Menu( 
           NewAction,
           Separator(),
-          self.io_driver_list.remove_action,
+          IODriverList.remove_action,
           Separator(),
           RenameAction
         ),
@@ -79,17 +80,21 @@ class Project(HasTraits):
     ]
   )
 
-  # The main view
   view = View(
-    Group(
-      Item(
+    VSplit(
+      Group(Item(
         name = 'io_driver_list',
         editor = tree_editor,
         resizable = True,
-        show_label = False
+        show_label = False,
+        height = .3
+      )),
+      Item(
+        name = 'variables', 
+        show_label = False,
+        style = 'custom'
       )
     ),
-    handler = self.io_driver_list,
     title = 'Plot-o-matic',
     resizable = True,
     width = .7,
@@ -99,14 +104,16 @@ class Project(HasTraits):
 a = td.TestDriver()
 f = sf.SimpleFileDriver()
 
-iodl = IODriverList(io_drivers = [a, f])
-proj = Project(io_driver_list = iodl)
-  
-c = csvd.CSVDecoder()
-n = nulld.NullDecoder()
+vs = Variables()
 
-a._register_decoder(c)
-a._register_decoder(n)
+iodl = IODriverList(io_drivers = [a, f])
+proj = Project(io_driver_list = iodl, variables = vs)
+  
+c = csvd.CSVDecoder(variables = vs)
+n = nulld.NullDecoder(variables = vs)
+
+f._register_decoder(c)
+f._register_decoder(n)
 a.start()
 f.start()
 

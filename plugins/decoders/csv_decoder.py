@@ -16,15 +16,15 @@ class CSVDecoder(DataDecoder):
   separator = Str(',')
   variable_names = Str('_,a,b,c,d')
   
-  data_dict = {}
-  
-  def receive(self, data):
+  def decode(self, data):
     """
         Decode CSV input data then assign variables based on a CSV format list
         list of names, using an '_' to ignore a field.
     """
     data_list = data.split(self.separator)
+    data_dict = {}
     for n, var in enumerate(self.variable_names.split(',')):
       if var != '_':
-        self.data_dict[var] = float(data_list[n])
+        data_dict[var] = float(data_list[n])
+    return data_dict
     

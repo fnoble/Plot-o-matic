@@ -1,4 +1,5 @@
-from enthought.traits.api import HasTraits, Str
+from enthought.traits.api import HasTraits, Instance, Str
+from variables import Variables
 
 class DataDecoder(HasTraits):
   """
@@ -6,19 +7,15 @@ class DataDecoder(HasTraits):
       become the variables we can plot.
   """
   name = 'Decoder'
-  data_dict = {}
+  variables = Instance(Variables) 
   
-  def receive(self, data):
+  def decode(self, data):
     """
         This function gets called when some new data is received from
-        the input, here you should decode it and update the variables you
-        are decoding
+        the input, here you should decode it and return a dict containing
+        variable names and values for the data.
     """
-    pass
+    return {}
     
   def _receive_callback(self, data):
-    self.receive(data)
-    self.send_update()
-    
-  def send_update(self):
-    print self.data_dict
+    self.variables.update_variables(self.decode(data))

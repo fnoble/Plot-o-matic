@@ -12,6 +12,7 @@ class NullDecoder(DataDecoder):
     Item(label= "The null decoder just prints the data \nit receives to the console for testing."),
     title='Null decoder'
   )
-  def receive(self, data):
+  def decode(self, data):
     print data
+    return {}
     

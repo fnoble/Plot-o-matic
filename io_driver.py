@@ -60,9 +60,9 @@ class IODriver(t.Thread, HasTraits):
     """
         Pass data on to the decoding layer.
     """
-    for decoder in self._decoders #self._decoder_list.get_decoders():
+    for decoder in self._decoders: #self._decoder_list.get_decoders():
       decoder._receive_callback(data)
-      
+"""
 class DecoderList(HasTraits, Handler):
   _decoders = List(DataDecoder)
   
@@ -72,4 +72,4 @@ class DecoderList(HasTraits, Handler):
   def add_decoder(self, decoder):
     self._decoders += [decoder]
     
-  
+"""
