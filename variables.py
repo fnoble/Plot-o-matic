@@ -49,7 +49,6 @@ class Variables(HasTraits):
     new_vars_pool.update(data_dict)
     self.vars_pool = new_vars_pool
     self.vars_list += [(new_vars_pool, self.sample_number, time.time())]
-    print self.get_data_array("a*d")
     
   @on_trait_change('vars_pool')
   def update_vars_table(self, old_pool, new_pool):
@@ -63,7 +62,11 @@ class Variables(HasTraits):
         Returns the value of a python expression evaluated with 
         the variables in the pool in scope.
     """
-    return eval(expr, vars_pool)
+    try:
+      data = eval(expr, vars_pool)
+    except:
+      data = None
+    return data
     
   def get_data_array(self, expr):
     """
@@ -75,5 +78,6 @@ class Variables(HasTraits):
     for vars_list_item in self.vars_list:
       (vars_pool, sample_num, time) = vars_list_item
       value = self.eval_expr(expr, vars_pool)
-      data_array += [(value, sample_num, time)]
+      if value:
+        data_array += [(value, sample_num, time)]
     return data_array

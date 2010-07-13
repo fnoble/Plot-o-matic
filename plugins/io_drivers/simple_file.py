@@ -26,8 +26,8 @@ class SimpleFileDriver(IODriver):
     self.fp.close()
   
   def receive(self):    
-    self.pass_data(self.fp.readline())
     time.sleep(self.period_ms / 1000.0)
+    return self.fp.readline()
       
   @on_trait_change('data_file')
   def reopen_file(self, old_file, new_file):

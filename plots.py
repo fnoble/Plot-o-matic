@@ -1,74 +1,114 @@
-import wx
-import matplotlib
-# We want matplotlib to use a wxPython backend
-matplotlib.use('WXAgg')
-from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
+from enthought.traits.api import HasTraits, List, Str, Instance, on_trait_change
+from enthought.traits.ui.api import View, Item, ListEditor
+from wx import CallAfter
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_wx import NavigationToolbar2Wx
 
-from enthought.traits.api import Any, Instance, HasTraits
-from enthought.traits.ui.wx.editor import Editor
-from enthought.traits.ui.wx.basic_editor_factory import BasicEditorFactory
+from mpl_figure_editor import MPLFigureEditor
+from variables import Variables
 
-class _MPLFigureEditor(Editor):
-  scrollable  = True
 
-  def init(self, parent):
-    self.control = self._create_canvas(parent)
-    self.set_tooltip()
+class Plot(HasTraits):
+  """
+      A plot, cointains code to display using a Matplotlib figure and to update itself
+      dynamically from a Variables instance (which must be passed in on initialisation).
+      The function plotted is calculated using 'expr' which should also be set on init
+      and can be any python expression using the variables in the pool.
+  """
+  
+  figure = Instance(Figure, ())
+  variables = Instance(Variables)
+  name = Str('Plot')
+  expr = Str
+  
+  view = View(
+    Item(name = 'name', label = 'Plot name'),
+    Item(name = 'expr', label = 'Plot expression'),
+    Item(
+      name = 'figure',
+      editor = MPLFigureEditor(),
+      show_label = False
+    ),
+    width = 400,
+    height = 400,
+    resizable = True
+  )
+  
+  def __init__(self, **kwargs):
+    # Init code creates an empty plot to be updated later.
+    HasTraits.__init__(self, **kwargs)
+    axes = self.figure.add_subplot(111)
+    axes.plot([0], [0])
+  
+  def update_plot(self):
+    """
+        Update the plot from the Variables instance and make a call to wx to
+        redraw the figure.
+    """
+    axes = self.figure.gca()
+    lines = axes.get_lines()
+    
+    if lines:
+      data = self.variables.get_data_array(self.expr)
+      
+      xs = [0]
+      ys = [0]
+      for y, point_no, point_time in data:
+        xs += [point_no]
+        ys += [y]
 
-  def update_editor(self):
-    pass
+      lines[0].set_xdata(xs)
+      lines[0].set_ydata(ys)
+      axes.set_ybound(upper=max(ys), lower=min(ys))
+      axes.set_xbound(upper=max(xs), lower=min(xs))
+      CallAfter(self.figure.canvas.draw) # wx thread safe call
+    
+  @on_trait_change('expr')
+  def update_expr(self, old_expr, new_expr):
+    """ Called when 'expr' is changed, calls out to update_plot """
+    if self.variables:
+      self.update_plot()
+  
+  @on_trait_change('variables.vars_pool')
+  def update_data(self, old_vars_pool, new_vars_pool):
+    """ Called when 'vars_pool' is changed in the Variables instance, calls out to update_plot """
+    self.update_plot()
 
-  def _create_canvas(self, parent):
-    """ Create the MPL canvas. """
-    # The panel lets us add additional controls.
-    panel = wx.Panel(parent, -1, style=wx.CLIP_CHILDREN)
-    sizer = wx.BoxSizer(wx.VERTICAL)
-    panel.SetSizer(sizer)
-    # matplotlib commands to create a canvas
-    mpl_control = FigureCanvas(panel, -1, self.value)
-    sizer.Add(mpl_control, 1, wx.LEFT | wx.TOP | wx.GROW)
-    toolbar = NavigationToolbar2Wx(mpl_control)
-    sizer.Add(toolbar, 0, wx.EXPAND)
-    self.value.canvas.SetMinSize((10,10))
-    return panel
 
-class MPLFigureEditor(BasicEditorFactory):
-  klass = _MPLFigureEditor
 
 
 class Plots(HasTraits):
-  plots = List(Str)
-  figures = List(Instance)
+  """
+      The plots class maintains the list of plots currently being used and provides the
+      tabbed view of all the different plots. It will also include functionality to add,
+      remove and manage plots. Make sure you initialise it with a Variables instance.
+  """
+  
+  plots = List(Plot)
+  variables = Instance(Variables) # Variables instance to provide the data context for all of our plots
   
   view = View(
     Item(
-      name = 'figures',
-      use_notebook = True,
-      show_label = False
+      name = 'plots',
+      style= 'custom',
+      show_label = False,
+      editor = ListEditor(
+        use_notebook = True,
+        deletable = True,
+        export = 'DockShellWindow',
+        page_name = '.name'
+      )
     )
   )
+  
+  def add_plot(self, plot_expr, name = None):
+    """
+        Add a plot to the seesion. The plot name defaults to the plot expression.
+    """
+    if not name:
+      name = plot_expr
+    plot = Plot(name = name, expr = plot_expr, variables = self.variables)
+    self.plots += [plot]
 
-if __name__ == "__main__":
-  # Create a window to demo the editor
-  from enthought.traits.api import HasTraits
-  from enthought.traits.ui.api import View, Item
-  from numpy import sin, cos, linspace, pi
 
-  class Test(HasTraits):
-      figure = Instance(Figure, ())
 
-      view = View(Item('figure', editor=MPLFigureEditor(),
-                              show_label=False),
-                      width=400,
-                      height=300,
-                      resizable=True)
 
-      def __init__(self):
-          super(Test, self).__init__()
-          axes = self.figure.add_subplot(111)
-          t = linspace(0, 2*pi, 200)
-          axes.plot(sin(t)*(1+0.5*cos(11*t)), cos(t)*(1+0.5*cos(11*t)))
-
-  Test().configure_traits()

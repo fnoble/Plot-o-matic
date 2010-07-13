@@ -8,11 +8,13 @@ class NullDecoder(DataDecoder):
   """
   
   name = Str('Null Decoder')
+  
   view = View(
     Item(label= "The null decoder just prints the data \nit receives to the console for testing."),
     title='Null decoder'
   )
+  
   def decode(self, data):
     print data
-    return {}
+    return None
     

@@ -18,5 +18,5 @@ class TestDriver(IODriver):
   period_ms = Float(1000.0)
   
   def receive(self):    
-    self.pass_data(self.data)
     time.sleep(self.period_ms / 1000.0)
+    return self.data

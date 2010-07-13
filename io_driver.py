@@ -7,15 +7,13 @@ class IODriver(t.Thread, HasTraits):
       Base class for a generic input driver. Runs in its own thread and grabs input from the 
       source and passes it out to the decoding layer. 
   """
-  # list of callback functions for the various listeners on this input
-  #_decoder_list = Instance(DecoderList)
   _decoders = List(DataDecoder)
   _wants_to_terminate = False
   name = Str('Input Driver')
   
-  def __init__(self):
+  def __init__(self, **kwargs):
     t.Thread.__init__(self)
-    HasTraits.__init__(self)
+    HasTraits.__init__(self, **kwargs)
   
   def open(self):
     """
@@ -33,43 +31,35 @@ class IODriver(t.Thread, HasTraits):
   def receive(self):
     """ 
         In this function you should add the code to setup and read from
-        your input source. Call pass_data somewhere here to pass the received
-        data to the data decoding layer. This function is called repeatedly
-        while the driver is running and should not block indefinately (a timeout
-        should be used to allow the driver to stop).
+        your input source. Return the received data to be passed to the data 
+        decoding layer. This function is called repeatedly while the driver 
+        is running and should not block indefinately (a timeout should be 
+        used to allow the driver to stop). You can return None is no data is available.
     """
-    pass
+    return None
     
   def run(self):
+    """ Used internally for the threading interface, you should put your code in receive. """
     while not self._wants_to_terminate:
-      self.receive()
+      data = self.receive()
+      if data:
+        self.pass_data(data)
     self.close()
     
   def start(self):
+    """ Used internally to start the thread for the input driver, if you have init code put it in open. """
     self.open()
     t.Thread.start(self)
 
   def stop(self):
+    """ Used internally to stop the thread for the input driver, if you have clean-up code put it in close. """
     self._wants_to_terminate = True
    
   def _register_decoder(self, decoder):
-    #self._decoder_list.add_decoder(decoder)
+    """ Used internally to register decoders so they receive data from the input driver. """
     self._decoders += [decoder]
     
   def pass_data(self, data):
-    """
-        Pass data on to the decoding layer.
-    """
+    """ Pass data on to the decoding layer. """
     for decoder in self._decoders: #self._decoder_list.get_decoders():
       decoder._receive_callback(data)
-"""
-class DecoderList(HasTraits, Handler):
-  _decoders = List(DataDecoder)
-  
-  def get_decoders(self):
-    return self._decoders
-    
-  def add_decoder(self, decoder):
-    self._decoders += [decoder]
-    
-"""

@@ -6,7 +6,7 @@ import inspect as ins
 from io_driver import IODriver
 from data_decoder import DataDecoder
 from variables import Variables
-
+from plots import Plots
 
 from enthought.traits.api \
     import HasTraits, Str, Regex, List, Instance, DelegatesTo
@@ -41,6 +41,7 @@ class IODriverList(Handler):
 class Project(HasTraits):
   io_driver_list = Instance(IODriverList)
   variables = Instance(Variables)
+  plots = Instance(Plots)
   
   tree_editor = TreeEditor(
     nodes = [
@@ -93,6 +94,11 @@ class Project(HasTraits):
         name = 'variables', 
         show_label = False,
         style = 'custom'
+      ),
+      Item(
+        name = 'plots', 
+        show_label = False,
+        style = 'custom'
       )
     ),
     title = 'Plot-o-matic',
@@ -105,15 +111,17 @@ a = td.TestDriver()
 f = sf.SimpleFileDriver()
 
 vs = Variables()
+pls = Plots(variables = vs)
+pls.add_plot("a+b")
+pls.add_plot("c+d")
 
 iodl = IODriverList(io_drivers = [a, f])
-proj = Project(io_driver_list = iodl, variables = vs)
+proj = Project(io_driver_list = iodl, variables = vs, plots = pls)
   
 c = csvd.CSVDecoder(variables = vs)
-n = nulld.NullDecoder(variables = vs)
 
 f._register_decoder(c)
-f._register_decoder(n)
+
 a.start()
 f.start()
 
