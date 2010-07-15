@@ -1,11 +1,21 @@
-from enthought.traits.api import HasTraits, List, Str, Instance, on_trait_change
-from enthought.traits.ui.api import View, Item, ListEditor
+from enthought.traits.api import HasTraits, List, Str, Float, Bool, Instance, on_trait_change
+from enthought.traits.ui.api import View, Item, ListEditor, HGroup, VGroup
 from wx import CallAfter
 from matplotlib.figure import Figure
 
 from mpl_figure_editor import MPLFigureEditor
 from variables import Variables
 
+figure_view = View(
+  Item(
+    name = 'figure',
+    editor = MPLFigureEditor(),
+    show_label = False
+  ),
+  width = 400,
+  height = 400,
+  resizable = True
+)
 
 class Plot(HasTraits):
   """
@@ -20,17 +30,56 @@ class Plot(HasTraits):
   name = Str('Plot')
   expr = Str
   
-  view = View(
+  x_max = Float
+  x_max_auto = Bool(True)
+  x_min = Float
+  x_min_auto = Bool(True)
+  y_max = Float
+  y_max_auto = Bool(True)
+  y_min = Float
+  y_min_auto = Bool(True)
+  
+  scroll = Bool(True)
+  scroll_width = Float
+    
+  traits_view = View(
     Item(name = 'name', label = 'Plot name'),
     Item(name = 'expr', label = 'Plot expression'),
+    VGroup(
+      HGroup(
+        Item(name = 'x_max', label = 'Max'),
+        Item(name = 'x_min', label = 'Min')
+      ),
+      HGroup(
+        Item(name = 'x_max_auto', label = 'Auto Max'),
+        Item(name = 'x_min_auto', label = 'Auto Min'),
+      ),
+      HGroup(
+        Item(name = 'scroll', label = 'Scroll'),
+        Item(name = 'scroll_width', label = 'Scroll Width'),
+      ),      
+      label = 'X', show_border = True
+    ),
+    HGroup(
+      Item(name = 'y_max', label = 'Max'),
+      Item(name = 'y_max_auto', show_label = False),
+      Item(name = 'y_min', label = 'Min'),
+      Item(name = 'y_min_auto', show_label = False),
+      label = 'Y', show_border = True
+    ),
+    title = 'Plot settings',
+    resizable = True
+  )
+  
+  figure_view = View(
     Item(
       name = 'figure',
       editor = MPLFigureEditor(),
       show_label = False
     ),
-    width = 400,
-    height = 400,
-    resizable = True
+    width=400,
+    height=300,
+    resizable=True
   )
   
   def __init__(self, **kwargs):
@@ -58,9 +107,21 @@ class Plot(HasTraits):
 
       lines[0].set_xdata(xs)
       lines[0].set_ydata(ys)
-      axes.set_ybound(upper=max(ys), lower=min(ys))
-      axes.set_xbound(upper=max(xs), lower=min(xs))
-      CallAfter(self.figure.canvas.draw) # wx thread safe call
+      
+      if self.x_max_auto:
+        self.x_max = max(xs)
+      if self.x_min_auto:
+        self.x_min = min(xs)
+      if self.y_max_auto:
+        self.y_max = max(ys)
+      if self.y_min_auto:
+        self.y_min = min(ys)
+      
+      axes.set_ybound(upper=self.y_max, lower=self.y_min)
+      axes.set_xbound(upper=self.x_max, lower=self.x_min)
+      
+      if self.figure.canvas:
+        CallAfter(self.figure.canvas.draw) # wx thread safe call
     
   @on_trait_change('expr')
   def update_expr(self, old_expr, new_expr):
