@@ -22,9 +22,14 @@ class CSVDecoder(DataDecoder):
         list of names, using an '_' to ignore a field.
     """
     data_list = data.split(self.separator)
-    data_dict = {}
-    for n, var in enumerate(self.variable_names.split(',')):
-      if var != '_':
-        data_dict[var] = float(data_list[n])
-    return data_dict
+    var_names = self.variable_names.split(',')
+    
+    if len(data_list) == len(var_names):
+      data_dict = {}
+      for n, var in enumerate(var_names):
+        if var != '_':
+          data_dict[var] = float(data_list[n])
+      return data_dict
+      
+    return None
     

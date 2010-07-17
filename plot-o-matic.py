@@ -1,6 +1,7 @@
 import plugins.io_drivers.test as td
 import plugins.io_drivers.simple_file as sf
 import plugins.decoders.csv_decoder as csvd
+import plugins.decoders.regex_decoder as rxd
 import plugins.decoders.null_decoder as nulld
 import inspect as ins
 from io_driver import IODriver
@@ -108,7 +109,7 @@ class Project(HasTraits):
         editor = tree_editor,
         resizable = True,
         show_label = False,
-        width = .3
+        width = .32
       ),
       VSplit(
         Item(
@@ -160,8 +161,10 @@ iodl = IODriverList(io_drivers = [a, f], plots_instance = pls)
 proj = Project(io_driver_list = iodl, variables = vs, plots = pls)
   
 c = csvd.CSVDecoder(variables = vs)
+r = rxd.RegexDecoder(variables = vs)
 
 f._register_decoder(c)
+f._register_decoder(r)
 
 a.start()
 f.start()

@@ -1,4 +1,4 @@
-from enthought.traits.api import HasTraits, List, Str, Float, Bool, Instance, on_trait_change
+from enthought.traits.api import HasTraits, List, Str, Float, Bool, Instance, Enum, on_trait_change
 from enthought.traits.ui.api import View, Item, ListEditor, HGroup, VGroup
 from wx import CallAfter
 from matplotlib.figure import Figure
@@ -39,32 +39,48 @@ class Plot(HasTraits):
   y_min = Float
   y_min_auto = Bool(True)
   
-  scroll = Bool(True)
-  scroll_width = Float
+  scroll = Bool(False)
+  scroll_width = Float(10)
+  
+  legend = Bool(True)
+  legend_pos = Enum(
+    'upper right', 'upper left', 'lower left', 
+    'lower right', 'right', 'center left', 'center right', 
+    'lower center', 'upper center', 'center', 'best'
+  )
     
   traits_view = View(
     Item(name = 'name', label = 'Plot name'),
-    Item(name = 'expr', label = 'Plot expression'),
+    Item(name = 'expr', label = 'Expression(s)'),
+    Item(label = 'Use commas\nfor multi-line plots.'),
+    HGroup(
+      Item(name = 'legend', label = 'Show legend'),
+      Item(name = 'legend_pos', show_label = False),
+    ),
     VGroup(
       HGroup(
         Item(name = 'x_max', label = 'Max'),
-        Item(name = 'x_min', label = 'Min')
+        Item(name = 'x_max_auto', label = 'Auto')
       ),
       HGroup(
-        Item(name = 'x_max_auto', label = 'Auto Max'),
-        Item(name = 'x_min_auto', label = 'Auto Min'),
+        Item(name = 'x_min', label = 'Min'),
+        Item(name = 'x_min_auto', label = 'Auto')
       ),
       HGroup(
         Item(name = 'scroll', label = 'Scroll'),
-        Item(name = 'scroll_width', label = 'Scroll Width'),
+        Item(name = 'scroll_width', label = 'Scroll width'),
       ),      
       label = 'X', show_border = True
     ),
-    HGroup(
-      Item(name = 'y_max', label = 'Max'),
-      Item(name = 'y_max_auto', show_label = False),
-      Item(name = 'y_min', label = 'Min'),
-      Item(name = 'y_min_auto', show_label = False),
+    VGroup(
+      HGroup(
+        Item(name = 'y_max', label = 'Max'),
+        Item(name = 'y_max_auto', label = 'Auto')
+      ),
+      HGroup(
+        Item(name = 'y_min', label = 'Min'),
+        Item(name = 'y_min_auto', label = 'Auto')
+      ),     
       label = 'Y', show_border = True
     ),
     title = 'Plot settings',
@@ -97,37 +113,79 @@ class Plot(HasTraits):
     lines = axes.get_lines()
     
     if lines:
-      data = self.variables.get_data_array(self.expr)
+      exprs = self.get_exprs()
+      if len(exprs) > len(lines):
+        for i in range(len(exprs) - len(lines)):
+          axes.plot([0], [0])
+        lines = axes.get_lines()
       
-      xs = [0]
-      ys = [0]
-      for y, point_no, point_time in data:
-        xs += [point_no]
-        ys += [y]
+      max_xs = max_ys = min_xs = min_ys = 0
+      
+      for n, expr in enumerate(exprs):
+        data = self.variables.get_data_array(expr)
+      
+        xs = [0]
+        ys = [0]
+        for y, point_no, point_time in data:
+          xs += [point_no]
+          ys += [y]
 
-      lines[0].set_xdata(xs)
-      lines[0].set_ydata(ys)
+        lines[n].set_xdata(xs)
+        lines[n].set_ydata(ys)
+        
+        max_xs = max_xs if (max(xs) < max_xs) else max(xs)
+        max_ys = max_ys if (max(ys) < max_ys) else max(ys)
+        min_xs = min_xs if (min(xs) > min_xs) else min(xs)
+        min_ys = min_ys if (min(ys) > min_ys) else min(ys)
       
       if self.x_max_auto:
-        self.x_max = max(xs)
+        self.x_max = max_xs
       if self.x_min_auto:
-        self.x_min = min(xs)
+        if self.scroll and self.x_max_auto:
+          scroll_x_min = self.x_max - self.scroll_width
+          self.x_min = scroll_x_min if (scroll_x_min >= 0) else 0
+        else:
+          self.x_min = min_xs
       if self.y_max_auto:
-        self.y_max = max(ys)
+        self.y_max = max_ys
       if self.y_min_auto:
-        self.y_min = min(ys)
+        self.y_min = min_ys
       
       axes.set_ybound(upper=self.y_max, lower=self.y_min)
       axes.set_xbound(upper=self.x_max, lower=self.x_min)
       
       if self.figure.canvas:
         CallAfter(self.figure.canvas.draw) # wx thread safe call
+  
+  def get_exprs(self):
+    return self.expr.split(',')
+  
+  @on_trait_change('legend_pos')
+  def update_legend_pos(self, old, new):
+    """ Move the legend, calls update_legend """
+    self.update_legend(None, None)
+  
+  @on_trait_change('legend')
+  def update_legend(self, old, new):
+    """ Called when we change the legend display """
+    axes = self.figure.gca()
+    lines = axes.get_lines()
+    exprs = self.get_exprs()
+    
+    if len(exprs) > 1 and self.legend:
+      axes.legend(lines[:len(exprs)], exprs, loc=self.legend_pos)
+    else:
+      axes.legend_ = None
+    
+    if self.figure.canvas:
+      CallAfter(self.figure.canvas.draw) # wx thread safe call  
     
   @on_trait_change('expr')
   def update_expr(self, old_expr, new_expr):
     """ Called when 'expr' is changed, calls out to update_plot """
     if self.variables:
       self.update_plot()
+      self.update_legend(None, None)
   
   @on_trait_change('variables.vars_pool')
   def update_data(self, old_vars_pool, new_vars_pool):
