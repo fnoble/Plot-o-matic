@@ -1,5 +1,5 @@
 from enthought.traits.api import HasTraits, List, Str, Float, Bool, Instance, Enum, on_trait_change
-from enthought.traits.ui.api import View, Item, ListEditor, HGroup, VGroup
+from enthought.traits.ui.api import View, Item, ListEditor, HGroup, VGroup, TextEditor
 from wx import CallAfter
 from matplotlib.figure import Figure
 import threading as t
@@ -53,7 +53,7 @@ class Plot(HasTraits):
     
   traits_view = View(
     Item(name = 'name', label = 'Plot name'),
-    Item(name = 'expr', label = 'Expression(s)'),
+    Item(name = 'expr', label = 'Expression(s)', editor=TextEditor(enter_set=True, auto_set=False)),
     Item(label = 'Use commas\nfor multi-line plots.'),
     HGroup(
       Item(name = 'legend', label = 'Show legend'),
