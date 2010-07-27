@@ -8,10 +8,10 @@ import math
 class VariableTableAdapter(TabularAdapter):
   columns = [('Variable name', 0), ('Value', 1)]
   
-  def _get_bg_color(self):
-    #value = (0xFF * self.item[2])/4
-    #return (0xFF, value, value)
-    pass
+  #def _get_bg_color(self):
+  #  value = (0xFF * self.item[2])/4
+  #  return (0xFF, value, value)
+  #  pass
 
 vars_table_editor = TabularEditor(
   adapter = VariableTableAdapter(),
