@@ -20,7 +20,7 @@ from enthought.traits.ui.wx.tree_editor \
     import NewAction, CopyAction, CutAction, \
            PasteAction, DeleteAction, RenameAction
 
-class IODriverList(Handler):
+class IODriverList(HasTraits):
   """
       Maintains the list of input drivers currently in use and provides
       facilities to add and remove drivers (also used as a handler for
@@ -30,16 +30,24 @@ class IODriverList(Handler):
   plots = DelegatesTo('plots_instance')
   plots_instance = Instance(Plots)
   
+class TreeHandler(Handler):
   remove_action = Action(name='Remove', action='handler.remove(editor,object)')
-  new_action = Action(name='Add Input Driver', action='handler.new(editor,object)')
+  new_io_driver_action = Action(name='Add Input Driver', action='handler.new_io_driver(editor,object)')
   
-  def remove(self, editor, io_driver_object):
+  def remove(self, editor, object):
     io_driver_object.stop()
-    io_driver.remove(io_driver_object)
+    io_drivers.remove(io_driver_object)
     
-  def new(self, editor, root_object):
-    print "Adding IO driver"
-    io_drivers += [IODriver()]
+  def new_io_driver(self, editor, object):
+    try:
+      print "Adding IO driver"
+      #object.io_drivers += [td.TestDriver()]
+      print editor.__dict__
+      editor.insert_child(0, td.TestDriver())
+      print editor.nodes[0].get_children()
+      print object.io_drivers
+    except Exception as e:
+      print e
 
 class Project(HasTraits):
   io_driver_list = Instance(IODriverList)
@@ -64,7 +72,7 @@ class Project(HasTraits):
         children  = 'io_drivers',
         label     = '=Input Drivers',
         view      = View(),
-        menu      = Menu(IODriverList.new_action)
+        menu      = Menu(TreeHandler.new_io_driver_action)
       ),
       TreeNode( 
         node_for  = [IODriver],
@@ -74,7 +82,7 @@ class Project(HasTraits):
         menu      = Menu( 
           NewAction,
           Separator(),
-          IODriverList.remove_action,
+          TreeHandler.remove_action,
           Separator(),
           RenameAction
         ),
@@ -152,7 +160,8 @@ class Project(HasTraits):
     title = 'Plot-o-matic',
     resizable = True,
     width = 1000,
-    height = 600 
+    height = 600,
+    handler = TreeHandler()
   )
   
   def __init__(self, **kwargs):
