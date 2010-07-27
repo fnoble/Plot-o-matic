@@ -51,7 +51,9 @@ class Project(HasTraits):
   plot_node = TreeNode( 
     node_for  = [Plot],
     auto_open = True,
-    label     = 'name'
+    label     = 'name',
+    icon_path = 'icons/',
+    icon_item = 'plot.png'
   )
   
   tree_editor = TreeEditor(
@@ -76,7 +78,10 @@ class Project(HasTraits):
           Separator(),
           RenameAction
         ),
-        add       = [DataDecoder]
+        add       = [DataDecoder],
+        icon_path = 'icons/',
+        icon_open = 'input.png',
+        icon_group = 'input.png'
       ),
       TreeNode( 
         node_for  = [DataDecoder],
@@ -88,6 +93,8 @@ class Project(HasTraits):
           Separator(),
           RenameAction
         ),
+        icon_path = 'icons/',
+        icon_item = 'decoder.png'
       ),
       TreeNode( 
         node_for  = [IODriverList],
