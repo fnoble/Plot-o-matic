@@ -13,7 +13,7 @@ from enthought.traits.api \
     import HasTraits, Str, Regex, List, Instance, DelegatesTo
 from enthought.traits.ui.api \
     import TreeEditor, TreeNode, View, Item, VSplit, \
-           HGroup, Handler, Group, Include, ValueEditor, HSplit, ListEditor
+           HGroup, Handler, Group, Include, ValueEditor, HSplit, ListEditor, InstanceEditor
 from enthought.traits.ui.menu \
     import Menu, Action, Separator
 from enthought.traits.ui.wx.tree_editor \
@@ -112,17 +112,26 @@ class Project(HasTraits):
         width = .32
       ),
       VSplit(
+        #Item(
+        #  name = 'visible_plots',
+        #  style= 'custom',
+        #  show_label = False,
+        #  editor = ListEditor(
+        #    use_notebook = True,
+        #    deletable = True,
+        #    export = 'DockShellWindow',
+        #    page_name = '.name',
+        #    view = 'figure_view',
+        #    selected = 'selected_plot'
+        #  )
+        #),
         Item(
-          name = 'visible_plots',
-          style= 'custom',
+          name = 'selected_plot',
+          style = 'custom',
+          resizable = True,
           show_label = False,
-          editor = ListEditor(
-            use_notebook = True,
-            deletable = True,
-            export = 'DockShellWindow',
-            page_name = '.name',
-            view = 'figure_view',
-            selected = 'selected_plot'
+          editor = InstanceEditor(
+            view = 'figure_view'
           )
         ),
         Item(
