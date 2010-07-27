@@ -2,6 +2,8 @@ from enthought.traits.api import HasTraits, List, Str, Float, Bool, Instance, En
 from enthought.traits.ui.api import View, Item, ListEditor, HGroup, VGroup
 from wx import CallAfter
 from matplotlib.figure import Figure
+import threading as t
+import time
 
 from mpl_figure_editor import MPLFigureEditor
 from variables import Variables
@@ -195,7 +197,7 @@ class Plot(HasTraits):
 
 
 
-class Plots(HasTraits):
+class Plots(HasTraits, t.Thread):
   """
       The plots class maintains the list of plots currently being used and provides the
       tabbed view of all the different plots. It will also include functionality to add,
@@ -204,6 +206,11 @@ class Plots(HasTraits):
   
   plots = List(Plot)
   variables = Instance(Variables) # Variables instance to provide the data context for all of our plots
+  selected_plot = Instance(Plot)
+  
+  name = Str("Plots") # for thread debugging
+  
+  _wants_to_terminate = False
   
   view = View(
     Item(
@@ -218,6 +225,23 @@ class Plots(HasTraits):
       )
     )
   )
+  
+  def __init__(self, **kwargs):
+    t.Thread.__init__(self)
+    HasTraits.__init__(self, **kwargs)
+  
+  def run(self):
+    """ Thread to update plots. """
+    while not self._wants_to_terminate:
+      if self.selected_plot:
+        self.selected_plot.update_plot()
+      time.sleep(0.01)
+  
+  def select_plot(self, plot):
+    self.selected_plot = plot
+    
+  def stop(self):
+    self._wants_to_terminate = True
   
   def add_plot(self, plot_expr, name = None):
     """
