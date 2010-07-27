@@ -41,12 +41,12 @@ class Plot(HasTraits):
   y_min = Float
   y_min_auto = Bool(True)
   
-  scroll = Bool(False)
-  scroll_width = Float(10)
+  scroll = Bool(True)
+  scroll_width = Float(300)
   
-  legend = Bool(True)
+  legend = Bool(False)
   legend_pos = Enum(
-    'upper right', 'upper left', 'lower left', 
+    'upper left', 'upper right', 'lower left', 
     'lower right', 'right', 'center left', 'center right', 
     'lower center', 'upper center', 'center', 'best'
   )
