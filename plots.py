@@ -2,6 +2,7 @@ from enthought.traits.api import HasTraits, List, Str, Float, Bool, Instance, En
 from enthought.traits.ui.api import View, Item, ListEditor, HGroup, VGroup, TextEditor
 from wx import CallAfter
 from matplotlib.figure import Figure
+import matplotlib.font_manager
 import threading as t
 import time
 
@@ -100,6 +101,9 @@ class Plot(HasTraits):
     resizable=True
   )
   
+  _update_lock = t.Lock()
+  legend_prop = matplotlib.font_manager.FontProperties(size=8)
+  
   def __init__(self, **kwargs):
     # Init code creates an empty plot to be updated later.
     HasTraits.__init__(self, **kwargs)
@@ -111,56 +115,74 @@ class Plot(HasTraits):
         Update the plot from the Variables instance and make a call to wx to
         redraw the figure.
     """
-    axes = self.figure.gca()
-    lines = axes.get_lines()
-    
-    if lines:
-      exprs = self.get_exprs()
-      if len(exprs) > len(lines):
-        for i in range(len(exprs) - len(lines)):
-          axes.plot([0], [0])
-        lines = axes.get_lines()
-      
-      max_xs = max_ys = min_xs = min_ys = 0
-      
-      for n, expr in enumerate(exprs):
-        data = self.variables.get_data_array(expr)
-      
-        xs = [0]
-        ys = [0]
-        for y, point_no, point_time in data:
-          xs += [point_no]
-          ys += [y]
-
-        lines[n].set_xdata(xs)
-        lines[n].set_ydata(ys)
-        
-        max_xs = max_xs if (max(xs) < max_xs) else max(xs)
-        max_ys = max_ys if (max(ys) < max_ys) else max(ys)
-        min_xs = min_xs if (min(xs) > min_xs) else min(xs)
-        min_ys = min_ys if (min(ys) > min_ys) else min(ys)
-      
-      if self.x_max_auto:
-        self.x_max = max_xs
-      if self.x_min_auto:
-        if self.scroll and self.x_max_auto:
-          scroll_x_min = self.x_max - self.scroll_width
-          self.x_min = scroll_x_min if (scroll_x_min >= 0) else 0
-        else:
-          self.x_min = min_xs
-      if self.y_max_auto:
-        self.y_max = max_ys
-      if self.y_min_auto:
-        self.y_min = min_ys
-      
-      axes.set_ybound(upper=self.y_max, lower=self.y_min)
-      axes.set_xbound(upper=self.x_max, lower=self.x_min)
-      
-      if self.figure.canvas:
-        CallAfter(self.figure.canvas.draw) # wx thread safe call
+    with self._update_lock:
+      axes = self.figure.gca()
+      lines = axes.get_lines()
   
+      if lines:
+        exprs = self.get_exprs()
+        if len(exprs) > len(lines):
+          for i in range(len(exprs) - len(lines)):
+            axes.plot([0], [0])
+          lines = axes.get_lines()
+    
+        max_xs = max_ys = min_xs = min_ys = 0
+    
+        for n, expr in enumerate(exprs):
+          first = 0
+          last = None
+          if self.scroll and self.x_min_auto and self.x_max_auto:
+            first = -self.scroll_width
+          if not self.x_min_auto:
+            first = int(self.x_min)
+          if not self.x_max_auto:
+            last = int(self.x_max) + 1
+          data = self.variables.get_data_array(expr, first=first, last=last)
+    
+          xs = [0]
+          ys = [0]
+          for y, point_no, point_time in data:
+            xs += [point_no]
+            ys += [y]
+        
+          lines[n].set_xdata(xs)
+          lines[n].set_ydata(ys)
+      
+          max_xs = max_xs if (max(xs) < max_xs) else max(xs)
+          max_ys = max_ys if (max(ys) < max_ys) else max(ys)
+          min_xs = min_xs if (min(xs) > min_xs) else min(xs)
+          min_ys = min_ys if (min(ys) > min_ys) else min(ys)
+    
+        if self.x_max_auto:
+          self.x_max = max_xs
+        if self.x_min_auto:
+          if self.scroll and self.x_max_auto:
+            scroll_x_min = self.x_max - self.scroll_width
+            self.x_min = scroll_x_min if (scroll_x_min >= 0) else 0
+          else:
+            self.x_min = min_xs
+        if self.y_max_auto:
+          self.y_max = max_ys
+        if self.y_min_auto:
+          self.y_min = min_ys
+    
+        if self.x_min_auto or self.x_max_auto:
+          axes.set_xbound(upper=self.x_max, lower=self.x_min)
+        if self.y_min_auto or self.y_max_auto:
+          axes.set_ybound(upper=self.y_max*1.1, lower=self.y_min*1.1)
+        
+        self.draw_plot()
+
   def get_exprs(self):
     return self.expr.split(',')
+    
+  def draw_plot(self):
+    if self.figure.canvas:
+      #CallAfter(self.figure.canvas.draw)
+      try:
+        self.figure.canvas.draw()
+      except:
+        pass
   
   @on_trait_change('legend_pos')
   def update_legend_pos(self, old, new):
@@ -170,29 +192,29 @@ class Plot(HasTraits):
   @on_trait_change('legend')
   def update_legend(self, old, new):
     """ Called when we change the legend display """
-    axes = self.figure.gca()
-    lines = axes.get_lines()
-    exprs = self.get_exprs()
+    with self._update_lock:
+      axes = self.figure.gca()
+      lines = axes.get_lines()
+      exprs = self.get_exprs()
     
-    if len(exprs) > 1 and self.legend:
-      axes.legend(lines[:len(exprs)], exprs, loc=self.legend_pos)
-    else:
-      axes.legend_ = None
+      if len(exprs) > 1 and self.legend:
+        axes.legend(lines[:len(exprs)], exprs, loc=self.legend_pos, prop=self.legend_prop)
+      else:
+        axes.legend_ = None
+      
+      self.draw_plot()
     
-    if self.figure.canvas:
-      CallAfter(self.figure.canvas.draw) # wx thread safe call  
-    
-  @on_trait_change('expr')
-  def update_expr(self, old_expr, new_expr):
-    """ Called when 'expr' is changed, calls out to update_plot """
-    if self.variables:
-      self.update_plot()
-      self.update_legend(None, None)
+  #@on_trait_change('expr')
+  #def update_expr(self, old_expr, new_expr):
+  #  """ Called when 'expr' is changed, calls out to update_plot """
+  #  if self.variables:
+  #    self.update_plot()
+  #    self.update_legend(None, None)
   
-  @on_trait_change('variables.vars_pool')
-  def update_data(self, old_vars_pool, new_vars_pool):
-    """ Called when 'vars_pool' is changed in the Variables instance, calls out to update_plot """
-    self.update_plot()
+  #@on_trait_change('variables.vars_pool')
+  #def update_data(self, old_vars_pool, new_vars_pool):
+  #  """ Called when 'vars_pool' is changed in the Variables instance, calls out to update_plot """
+  #  self.update_plot()
 
 
 
