@@ -73,16 +73,23 @@ class Variables(HasTraits):
       data = None
     return data
     
-  def get_data_array(self, expr):
+  def get_data_array(self, expr, first=0, last=None):
     """
         Returns an array of tuples containing the all the values of an
         the supplied expression and the sample numbers and times corresponding to
         these values.
     """
     data_array = []
+    if first < 0:
+      first = self.sample_number + first
+      if first < 0:
+        first = 0
+    if last and last < 0:
+      last = self.sample_number - last
     for vars_list_item in self.vars_list:
       (vars_pool, sample_num, time) = vars_list_item
-      value = self.eval_expr(expr, vars_pool)
-      if value:
-        data_array += [(value, sample_num, time)]
+      if sample_num > first and (not last or sample_num<last):
+        value = self.eval_expr(expr, vars_pool)
+        if value:
+          data_array += [(value, sample_num, time)]
     return data_array
