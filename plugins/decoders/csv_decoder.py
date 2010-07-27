@@ -24,11 +24,14 @@ class CSVDecoder(DataDecoder):
     data_list = data.split(self.separator)
     var_names = self.variable_names.split(',')
     
-    if len(data_list) == len(var_names):
+    if len(data_list) >= len(var_names):
       data_dict = {}
       for n, var in enumerate(var_names):
         if var != '_':
-          data_dict[var] = float(data_list[n])
+          try:
+            data_dict[var] = float(data_list[n])
+          except:
+            pass
       return data_dict
       
     return None
