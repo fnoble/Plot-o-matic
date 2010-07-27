@@ -44,6 +44,7 @@ class IODriver(t.Thread, HasTraits):
       data = self.receive()
       if data:
         self.pass_data(data)
+    print "IO driver thread terminating:", self.name
     self.close()
     
   def start(self):
