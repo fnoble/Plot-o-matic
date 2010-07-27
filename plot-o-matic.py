@@ -11,9 +11,6 @@ from data_decoder import DataDecoder
 from variables import Variables
 from plots import Plots, Plot, figure_view
 
-import yappi
-import time
-
 from enthought.traits.api \
     import HasTraits, Str, Regex, List, Instance, DelegatesTo
 from enthought.traits.ui.api \
@@ -28,6 +25,7 @@ from enthought.traits.ui.wx.tree_editor \
 PROFILE = False
 
 if PROFILE:
+  import yappi
   yappi.start()
 
 class IODriverList(HasTraits):
