@@ -6,12 +6,12 @@ import time
 import math
 
 class VariableTableAdapter(TabularAdapter):
-  columns = [('Variable name', 0), ('Value', 1)]
+  columns = [('Variable name', 0), ('Value', 1), ('Last update', 2)]
   
-  #def _get_bg_color(self):
-  #  value = (0xFF * self.item[2])/4
-  #  return (0xFF, value, value)
-  #  pass
+  def _get_bg_color(self):
+    #value = int(0xFF * self.item[3]/10.0)
+    value = 0xA0 if self.item[3] else 0xFF
+    return (value, 0xFF, value)
 
 vars_table_editor = TabularEditor(
   adapter = VariableTableAdapter(),
@@ -21,6 +21,7 @@ vars_table_editor = TabularEditor(
 
 class Variables(HasTraits):
   vars_pool = Dict()
+  vars_pool_age = Dict() # has the same keys as vars_pool but maintains the sample number when last updated
   vars_list = List()
   vars_table_list = List()  # a list version of vars_pool maintained for the TabularEditor
   sample_number = Int(0)
@@ -44,6 +45,13 @@ class Variables(HasTraits):
         into our global variable pool.
     """
     self.sample_number += 1
+    
+    # Make a new age dict for the updated vars and then update our global age dict
+    data_dict_age = {}
+    for key in data_dict.iterkeys():
+      data_dict_age[key] = self.sample_number
+    self.vars_pool_age.update(data_dict_age)
+    
     # We update into a new dict rather than vars_pool due to pythons pass by reference
     # behaviour, we need a fresh object to put on our array
     new_vars_pool = {}
@@ -57,7 +65,9 @@ class Variables(HasTraits):
     
   @on_trait_change('vars_pool')
   def update_vars_table(self, old_pool, new_pool):
-    self.vars_table_list = map(lambda (name, val): (name, repr(val)), list(self.vars_pool.iteritems()))
+    self.vars_table_list = map(lambda (name, val): (name, repr(val), self.vars_pool_age[name], self.vars_pool_age[name] == self.sample_number), list(self.vars_pool.iteritems()))
+    time.sleep(0.1)
+    self.vars_table_list = map(lambda (name, val): (name, repr(val), self.vars_pool_age[name], False), list(self.vars_pool.iteritems()))
     
   def reset_variables(self):
     self.vars_pool = {}
