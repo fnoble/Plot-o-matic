@@ -178,11 +178,11 @@ class Plot(HasTraits):
     
   def draw_plot(self):
     if self.figure.canvas:
-      #CallAfter(self.figure.canvas.draw)
-      try:
-        self.figure.canvas.draw()
-      except:
-        pass
+      CallAfter(self.figure.canvas.draw)
+      #try:
+      #  self.figure.canvas.draw()
+      #except:
+      #  pass
   
   @on_trait_change('legend_pos')
   def update_legend_pos(self, old, new):
@@ -257,7 +257,7 @@ class Plots(HasTraits, t.Thread):
     while not self._wants_to_terminate:
       if self.selected_plot:
         self.selected_plot.update_plot()
-      time.sleep(0.01)
+      time.sleep(0.2)
   
   def select_plot(self, plot):
     self.selected_plot = plot
