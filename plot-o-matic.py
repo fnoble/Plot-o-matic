@@ -35,13 +35,18 @@ if PROFILE:
 class IODriverList(HasTraits):
   """
       Maintains the list of input drivers currently in use and provides
-      facilities to add and remove drivers (also used as a handler for
-      menu operations).
+      facilities to add and remove drivers.
   """
   io_drivers = List(IODriver)
   plots = DelegatesTo('plots_instance')
   plots_instance = Instance(Plots)
   
+  def start_all(self):
+    map(lambda d: d.start(), self.io_drivers)
+
+  def stop_all(self):
+    map(lambda d: d.stop(), self.io_drivers)
+
 class TreeHandler(Handler):
   remove_action = Action(name='Remove', action='handler.remove(editor,object)')
   new_io_driver_action = Action(name='Add Input Driver', action='handler.new_io_driver(editor,object)')
@@ -186,12 +191,6 @@ class Project(HasTraits):
     self.selected_plot = plot
     self.plots.select_plot(plot)
       
-
-#a = td.TestDriver()
-#f = sf.SimpleFileDriver()
-#u = udpd.UDPDriver()
-stdi = stdind.StdinDriver()
-
 vs = Variables()
 pls = Plots(variables = vs)
 #pls.add_plot('a+b')
@@ -209,6 +208,11 @@ pls.add_plot('0.5', name='Plot2')
 pls.add_plot('0.5', name='Plot3')
 pls.add_plot('0.5', name='Plot4')
 
+#a = td.TestDriver()
+#f = sf.SimpleFileDriver()
+#u = udpd.UDPDriver()
+stdi = stdind.StdinDriver()
+
 iodl = IODriverList(io_drivers = [stdi], plots_instance = pls)
 proj = Project(io_driver_list = iodl, variables = vs, plots = pls)
   
@@ -224,19 +228,13 @@ stdi._register_decoder(spd)
 #f._register_decoder(n)
 #f._register_decoder(r)
 
-#a.start()
-#f.start()
-#u.start()
-stdi.start()
+iodl.start_all()
 pls.start()
 
 proj.configure_traits()
 
-#a.stop()
-#f.stop()
 pls.stop()
-#u.stop()
-stdi.stop()
+iodl.stop_all()
 
 if PROFILE:
   print "Generating Statistics"
