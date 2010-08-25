@@ -175,6 +175,12 @@ class Plot(HasTraits):
 
   def get_exprs(self):
     return self.expr.split(',')
+
+  def add_expr(self, expr):
+    if self.expr == '' or self.expr[:-1] == ',':
+      self.expr += expr
+    else:
+      self.expr += ',' + expr
     
   def draw_plot(self):
     if self.figure.canvas:
@@ -252,6 +258,12 @@ class Plots(HasTraits, t.Thread):
     t.Thread.__init__(self)
     HasTraits.__init__(self, **kwargs)
   
+  @on_trait_change("variables.add_var_event")
+  def add_to_curr_plot(self, evt):
+    #print evt.item[0]
+    if self.selected_plot:
+      self.selected_plot.add_expr(evt.item[0])
+
   def run(self):
     """ Thread to update plots. """
     while not self._wants_to_terminate:

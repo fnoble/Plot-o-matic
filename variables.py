@@ -1,4 +1,4 @@
-from enthought.traits.api import HasTraits, Int, Dict, List, Property, Enum, Color, on_trait_change
+from enthought.traits.api import HasTraits, Int, Dict, List, Property, Enum, Color, Any, on_trait_change
 from enthought.traits.ui.api import View, Item, ValueEditor, TabularEditor
 from enthought.traits.ui.tabular_adapter import TabularAdapter
 import time
@@ -13,22 +13,22 @@ class VariableTableAdapter(TabularAdapter):
   #  return (0xFF, value, value)
   #  pass
 
-vars_table_editor = TabularEditor(
-  adapter = VariableTableAdapter(),
-  editable = False
-  #images  = [ ImageResource( 'red_flag', search_path = search_path ) ]
-)
-
 class Variables(HasTraits):
   vars_pool = Dict()
   vars_list = List()
   vars_table_list = List()  # a list version of vars_pool maintained for the TabularEditor
   sample_number = Int(0)
 
+  add_var_event = Any()
+
   view = View(
            Item(
              name = 'vars_table_list',
-             editor = vars_table_editor,
+             editor = TabularEditor(
+               adapter = VariableTableAdapter(),
+               editable = False,
+               dclicked = "add_var_event"
+             ),
              resizable = True,
              show_label = False
            ),
@@ -54,7 +54,11 @@ class Variables(HasTraits):
     
     self.vars_pool = new_vars_pool
     self.vars_list += [(new_vars_pool, self.sample_number, time.time())]
-    
+  
+  #@on_trait_change('add_var_event')
+  #def add_var_to_plot(self, old, new):
+  #  print "woot"
+
   @on_trait_change('vars_pool')
   def update_vars_table(self, old_pool, new_pool):
     self.vars_table_list = map(lambda (name, val): (name, repr(val)), list(self.vars_pool.iteritems()))
