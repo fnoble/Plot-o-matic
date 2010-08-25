@@ -1,4 +1,4 @@
-from enthought.traits.api import Str, Bool
+from enthought.traits.api import Str, Bool, Enum
 from enthought.traits.ui.api import View, Item
 from data_decoder import DataDecoder
 import re
@@ -12,18 +12,21 @@ class SimplePlotDecoder(DataDecoder):
     Item(name="pass_through", label="Pass-through"),
     title='SimplePlot decoder'
   )
-  pass_through = Bool(True)
+  pass_through = Enum('User messages','Plot-o-matic messages','Both','None')
   sub_re = re.compile('\W+')
 
   def decode(self, data):
     """
         Decode an input string of the form ~variable_name#value.
     """
-    if self.pass_through:
-      print data
-    
     if data[0] != '~':
+      if self.pass_through == 'User messages' or self.pass_through == 'Both':
+        print data
       return None
+
+    if self.pass_through == 'Plot-o-matic messages' or self.pass_through == 'Both':
+      print data
+
 
     var_name, val = data[1:].split('#')
     var_name = self.sub_re.sub('_', var_name)
