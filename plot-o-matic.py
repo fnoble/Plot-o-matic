@@ -1,5 +1,13 @@
-import wxversion
-wxversion.select('2.8')
+#!/usr/bin/env python
+
+# If wxversion is installed, make sure we are
+# using wx >= 2.8
+try:
+  import wxversion
+  wxversion.select('2.8')
+except ImportError:
+  pass
+
 import plugins.io_drivers.test as td
 import plugins.io_drivers.simple_file as sf
 import plugins.io_drivers.udp as udpd
