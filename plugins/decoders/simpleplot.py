@@ -21,11 +21,11 @@ class SimplePlotDecoder(DataDecoder):
     """
     if data[0] != '~':
       if self.pass_through == 'User messages' or self.pass_through == 'Both':
-        print data
+        print data[:-1]
       return None
 
     if self.pass_through == 'Plot-o-matic messages' or self.pass_through == 'Both':
-      print data
+      print data[:-1]
 
 
     var_name, val = data[1:].split('#')
