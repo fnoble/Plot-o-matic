@@ -1,24 +1,35 @@
-from enthought.traits.api import HasTraits, List, Str, Float, Bool, Instance, Enum, on_trait_change
-from enthought.traits.ui.api import View, Item, ListEditor, HGroup, VGroup, TextEditor
-from wx import CallAfter
-from matplotlib.figure import Figure
-import matplotlib.font_manager
+from enthought.traits.api import Str, Bool, Enum, Float, HasTraits, Instance, on_trait_change, List, Array, Property, DelegatesTo, Dict
+from enthought.traits.ui.api import Group, VGroup, HGroup, Item, View, TextEditor, ListEditor
+
+import enthought.chaco.api as chaco
+from enthought.enable.component_editor import ComponentEditor
+from enthought.chaco.tools.api import PanTool, ZoomTool, LegendTool, \
+        TraitsTool, DragZoom
+
 import threading as t
 import time
 
-from mpl_figure_editor import MPLFigureEditor
 from variables import Variables
 
 figure_view = View(
-  Item(
-    name = 'figure',
-    editor = MPLFigureEditor(),
-    show_label = False
-  ),
+  Item('plot', editor=ComponentEditor(), show_label=False),
+  resizable = True,
   width = 400,
-  height = 400,
-  resizable = True
+  height = 400
 )
+"""
+colours_list = [
+  (0xED,0xD4,0x00),
+  (0xF5,0x79,0x00),
+  (0xC1,0x7D,0x11),
+  (0x73,0xD2,0x16),
+  (0x34,0x65,0xA4),
+  (0x75,0x50,0x7B),
+  (0xCC,0x00,0x00),
+  (0x2E,0x34,0x36),
+]
+"""
+colours_list = ['red', 'blue', 'green']
 
 class Plot(HasTraits):
   """
@@ -27,16 +38,21 @@ class Plot(HasTraits):
       The function plotted is calculated using 'expr' which should also be set on init
       and can be any python expression using the variables in the pool.
   """
+  plot = Instance(chaco.Plot)
+  plot_data = Instance(chaco.ArrayPlotData)
   
-  figure = Instance(Figure, ())
   variables = Instance(Variables)
+  expr_last_update = Dict
   name = Str('Plot')
   expr = Str
   
+  x_label = Str
   x_max = Float
   x_max_auto = Bool(True)
   x_min = Float
   x_min_auto = Bool(True)
+  
+  y_label = Str
   y_max = Float
   y_max_auto = Bool(True)
   y_min = Float
@@ -46,20 +62,12 @@ class Plot(HasTraits):
   scroll_width = Float(300)
   
   legend = Bool(False)
-  legend_pos = Enum(
-    'upper left', 'upper right', 'lower left', 
-    'lower right', 'right', 'center left', 'center right', 
-    'lower center', 'upper center', 'center', 'best'
-  )
     
   traits_view = View(
     Item(name = 'name', label = 'Plot name'),
     Item(name = 'expr', label = 'Expression(s)', editor=TextEditor(enter_set=True, auto_set=False)),
     Item(label = 'Use commas\nfor multi-line plots.'),
-    HGroup(
-      Item(name = 'legend', label = 'Show legend'),
-      Item(name = 'legend_pos', show_label = False),
-    ),
+    Item(name = 'legend', label = 'Show legend'),
     VGroup(
       HGroup(
         Item(name = 'x_max', label = 'Max'),
@@ -72,7 +80,8 @@ class Plot(HasTraits):
       HGroup(
         Item(name = 'scroll', label = 'Scroll'),
         Item(name = 'scroll_width', label = 'Scroll width'),
-      ),      
+      ),
+      Item(name = 'x_label', label = 'Label'),
       label = 'X', show_border = True
     ),
     VGroup(
@@ -83,138 +92,102 @@ class Plot(HasTraits):
       HGroup(
         Item(name = 'y_min', label = 'Min'),
         Item(name = 'y_min_auto', label = 'Auto')
-      ),     
+      ),
+      Item(name = 'y_label', label = 'Label'),
       label = 'Y', show_border = True
     ),
     title = 'Plot settings',
     resizable = True
   )
   
-  figure_view = View(
-    Item(
-      name = 'figure',
-      editor = MPLFigureEditor(),
-      show_label = False
-    ),
-    width=400,
-    height=300,
-    resizable=True
-  )
-  
-  _update_lock = t.Lock()
-  legend_prop = matplotlib.font_manager.FontProperties(size=8)
+  figure_view = figure_view
+  visible = Bool(False)
   
   def __init__(self, **kwargs):
-    # Init code creates an empty plot to be updated later.
     HasTraits.__init__(self, **kwargs)
-    axes = self.figure.add_subplot(111)
-    axes.plot([0], [0])
+    self.plot_data = chaco.ArrayPlotData()
+    self.plot = chaco.Plot(self.plot_data, title=self.name, auto_colors=colours_list)
+    self.plot.value_range.tight_bounds = False
+    #legend = chaco.Legend(component=self.plot, padding=10, align="ul")
+    #legend.tools.append(LegendTool(legend, drag_button="right"))
+    #self.plot.overlays.append(legend)
+    self.update_expr(None, None)
+    
+  @on_trait_change('name')
+  def update_name(self, new_name):
+    self.plot.title = new_name
+    self.plot.request_redraw()
+    
+  @on_trait_change('x_label')
+  def update_x_label(self, new_name):
+    self.plot.index_axis.title = new_name
+    self.plot.request_redraw()
+    
+  @on_trait_change('y_label')
+  def update_y_label(self, new_name):
+    self.plot.value_axis.title = new_name
+    self.plot.request_redraw()
+    
+  def update_plot_data(self, expr):
+    data = self.variables.get_data_array(expr, first=self.expr_last_update[expr])
+    self.expr_last_update[expr] += len(data)
+    
+    xs = []
+    ys = []
+    for y, point_no, point_time in data:
+      xs += [point_no]
+      ys += [y]
+    
+    if self.plot_data.get_data(expr):
+      ys = self.plot_data.get_data(expr) + ys
+    #if self.plot_data.get_data('x'):
+    #  xs = self.plot_data.get_data('x') + xs
+    self.plot_data.set_data(expr, ys)
+    self.plot_data.set_data('x', range(len(ys)))
+    
+    #print zip(self.plot_data.get_data('x'), self.plot_data.get_data(expr))
   
   def update_plot(self):
     """
-        Update the plot from the Variables instance and make a call to wx to
-        redraw the figure.
+        Update the plot from the Variables instance.
     """
-    with self._update_lock:
-      axes = self.figure.gca()
-      lines = axes.get_lines()
-  
-      if lines:
-        exprs = self.get_exprs()
-        if len(exprs) > len(lines):
-          for i in range(len(exprs) - len(lines)):
-            axes.plot([0], [0])
-          lines = axes.get_lines()
+    if self.plot_data:
+      for expr in self.get_exprs():
+        self.update_plot_data(expr)
+      self.plot.request_redraw()
     
-        max_xs = max_ys = min_xs = min_ys = 0
-    
-        for n, expr in enumerate(exprs):
-          first = 0
-          last = None
-          if self.scroll and self.x_min_auto and self.x_max_auto:
-            first = -self.scroll_width
-          if not self.x_min_auto:
-            first = int(self.x_min)
-          if not self.x_max_auto:
-            last = int(self.x_max) + 1
-          data = self.variables.get_data_array(expr, first=first, last=last)
-    
-          xs = [0]
-          ys = [0]
-          for y, point_no, point_time in data:
-            xs += [point_no]
-            ys += [y]
-        
-          lines[n].set_xdata(xs)
-          lines[n].set_ydata(ys)
-      
-          max_xs = max_xs if (max(xs) < max_xs) else max(xs)
-          max_ys = max_ys if (max(ys) < max_ys) else max(ys)
-          min_xs = min_xs if (min(xs) > min_xs) else min(xs)
-          min_ys = min_ys if (min(ys) > min_ys) else min(ys)
-    
-        if self.x_max_auto:
-          self.x_max = max_xs
-        if self.x_min_auto:
-          if self.scroll and self.x_max_auto:
-            scroll_x_min = self.x_max - self.scroll_width
-            self.x_min = scroll_x_min if (scroll_x_min >= 0) else 0
-          else:
-            self.x_min = min_xs
-        if self.y_max_auto:
-          self.y_max = max_ys
-        if self.y_min_auto:
-          self.y_min = min_ys
-    
-        if self.x_min_auto or self.x_max_auto:
-          axes.set_xbound(upper=self.x_max, lower=self.x_min)
-        if self.y_min_auto or self.y_max_auto:
-          axes.set_ybound(upper=self.y_max*1.1, lower=self.y_min*1.1)
-        
-        self.draw_plot()
 
   def get_exprs(self):
     return self.expr.split(',')
     
-  def draw_plot(self):
-    if self.figure.canvas:
-      #CallAfter(self.figure.canvas.draw)
-      try:
-        self.figure.canvas.draw()
-      except:
-        pass
-  
-  @on_trait_change('legend_pos')
-  def update_legend_pos(self, old, new):
-    """ Move the legend, calls update_legend """
-    self.update_legend(None, None)
-  
-  @on_trait_change('legend')
-  def update_legend(self, old, new):
-    """ Called when we change the legend display """
-    with self._update_lock:
-      axes = self.figure.gca()
-      lines = axes.get_lines()
+  @on_trait_change('expr')
+  def update_expr(self, old_expr, new_expr):
+    """ Called when 'expr' is changed """
+    if self.variables:
       exprs = self.get_exprs()
-    
-      if len(exprs) > 1 and self.legend:
-        axes.legend(lines[:len(exprs)], exprs, loc=self.legend_pos, prop=self.legend_prop)
-      else:
-        axes.legend_ = None
-      
-      self.draw_plot()
-    
-  #@on_trait_change('expr')
-  #def update_expr(self, old_expr, new_expr):
-  #  """ Called when 'expr' is changed, calls out to update_plot """
-  #  if self.variables:
-  #    self.update_plot()
-  #    self.update_legend(None, None)
+      plot_names = list(self.plot.plots.iterkeys())
+      # add new expressions to plot
+      for new_expr in [expr for expr in exprs if expr not in plot_names]:
+        print "Adding lines:", new_expr
+        self.expr_last_update[new_expr] = 0
+        self.update_plot_data(new_expr)
+        self.plot.plot(('x', new_expr), name = new_expr, style='line', color='auto')
+      # remove old ones
+      for old_plot in [plot_name for plot_name in plot_names if plot_name not in exprs]:
+        print "Removing lines:", old_plot
+        self.plot.delplot(old_plot)
+        self.plot_data.del_data(old_plot)
+        del self.expr_last_update[old_plot]
+      self.update_plot()
+      print self.plot_data.list_data()
+      print list(self.plot.plots.iterkeys())
+      print self.get_exprs()
   
-  #@on_trait_change('variables.vars_pool')
-  #def update_data(self, old_vars_pool, new_vars_pool):
-  #  """ Called when 'vars_pool' is changed in the Variables instance, calls out to update_plot """
-  #  self.update_plot()
+  @on_trait_change('variables.vars_pool')
+  def update_data(self):
+    """ Called when 'vars_pool' is changed in the Variables instance, calls out to update_plot """
+    if self.visible:
+      self.update_plot()
 
 
 
@@ -254,12 +227,16 @@ class Plots(HasTraits, t.Thread):
   
   def run(self):
     """ Thread to update plots. """
+    return
     while not self._wants_to_terminate:
       if self.selected_plot:
         self.selected_plot.update_plot()
-      time.sleep(0.01)
+      time.sleep(0.02)
   
   def select_plot(self, plot):
+    if self.selected_plot:
+      self.selected_plot.visible = False
+    plot.visible = True
     self.selected_plot = plot
     
   def stop(self):
