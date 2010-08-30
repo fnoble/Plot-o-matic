@@ -17,6 +17,7 @@ import plugins.decoders.regex_decoder as rxd
 import plugins.decoders.null_decoder as nulld
 import plugins.decoders.cstruct_decoder as structd
 import plugins.decoders.simpleplot as sp
+import plugins.decoders.jobysim_decoder as js
 import inspect as ins
 from io_driver import IODriver
 from data_decoder import DataDecoder
@@ -218,21 +219,25 @@ pls.add_plot('', name='Plot4')
 
 #a = td.TestDriver()
 #f = sf.SimpleFileDriver()
-#u = udpd.UDPDriver()
-stdi = stdind.StdinDriver()
+u = udpd.UDPDriver()
+#stdi = stdind.StdinDriver()
 
-iodl = IODriverList(io_drivers = [stdi], plots_instance = pls)
+#iodl = IODriverList(io_drivers = [stdi], plots_instance = pls)
+iodl = IODriverList(io_drivers = [u], plots_instance = pls)
 proj = Project(io_driver_list = iodl, variables = vs, plots = pls)
   
 #c = csvd.CSVDecoder(variables = vs)
 #r = rxd.RegexDecoder(variables = vs)
 #n = nulld.NullDecoder(variables = vs)
 #s = structd.CStructDecoder(variables = vs)
-spd = sp.SimplePlotDecoder(variables = vs)
+#spd = sp.SimplePlotDecoder(variables = vs)
+jsd = js.JobySimDecoder(variables = vs)
 
 #f._register_decoder(c)
 #u._register_decoder(s)
-stdi._register_decoder(spd)
+#u._register_decoder(spd)
+u._register_decoder(jsd)
+#stdi._register_decoder(spd)
 #f._register_decoder(n)
 #f._register_decoder(r)
 
