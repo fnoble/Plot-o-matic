@@ -13,7 +13,6 @@ Installation
 Plot-o-matic requires the following python modules to be installed:
 
 * numpy
-* matplotlib
 * wx
 * setupdocs (required by Traits)
 * Traits
@@ -28,9 +27,9 @@ Ubuntu
 
 Install the common libraries through apt:
 
-`sudo apt-get install python-dev python-setuptools python-setupdocs python-wxgtk2.8 python-numpy python-matplotlib`
+`sudo apt-get install python-dev python-setuptools python-setupdocs python-wxgtk2.8 python-numpy`
 
-Get Traits through easy_install because the versions in Ubuntu's repos are quite old:
+Get Traits etc. through easy_install because the versions in Ubuntu's repos are quite old:
 
 `sudo easy_install Traits TraitsGUI TraitsBackendWX Chaco`
 
