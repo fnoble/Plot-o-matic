@@ -90,6 +90,6 @@ class Variables(HasTraits):
       (vars_pool, sample_num, time) = vars_list_item
       if sample_num > first and (not last or sample_num<last):
         value = self.eval_expr(expr, vars_pool)
-        if value:
+        if value != None:
           data_array += [(value, sample_num, time)]
     return data_array
