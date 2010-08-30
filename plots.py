@@ -159,7 +159,13 @@ class Plot(HasTraits):
 
   def get_exprs(self):
     return self.expr.split(',')
-    
+
+  def add_expr(self, expr):
+    if self.expr == '' or self.expr[:-1] == ',':
+      self.expr += expr
+    else:
+      self.expr += ',' + expr
+
   @on_trait_change('expr')
   def update_expr(self, old_expr, new_expr):
     """ Called when 'expr' is changed """
@@ -225,13 +231,19 @@ class Plots(HasTraits, t.Thread):
     t.Thread.__init__(self)
     HasTraits.__init__(self, **kwargs)
   
+  @on_trait_change("variables.add_var_event")
+  def add_to_curr_plot(self, evt):
+    #print evt.item[0]
+    if self.selected_plot:
+      self.selected_plot.add_expr(evt.item[0])
+
   def run(self):
     """ Thread to update plots. """
     return
     while not self._wants_to_terminate:
       if self.selected_plot:
         self.selected_plot.update_plot()
-      time.sleep(0.02)
+      time.sleep(0.2)
   
   def select_plot(self, plot):
     if self.selected_plot:
