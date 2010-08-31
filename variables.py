@@ -19,11 +19,11 @@ class Variables(HasTraits):
   vars_table_list = List()  # a list version of vars_pool maintained for the TabularEditor
   sample_number = Int(0)
 
-  clear_data = Button('Clear Data')
   add_var_event = Event()
 
+  clear_data_button = Button('Clear Data')
   view = View(
-           Item(name = 'clear_data', show_label = False),
+           Item(name = 'clear_data_button', show_label = False),
            Item(
              name = 'vars_table_list',
              editor = TabularEditor(
@@ -57,9 +57,7 @@ class Variables(HasTraits):
     self.vars_pool = new_vars_pool
     self.vars_list += [(new_vars_pool, self.sample_number, time.time())]
   
-  def _clear_data_fired(self):
-    self.clear_data()
-
+  @on_trait_change('clear_data_button')
   def clear_data(self):
     """ Clear all recorded data. """
     self.sample_number = 0
