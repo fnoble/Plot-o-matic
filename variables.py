@@ -1,4 +1,4 @@
-from enthought.traits.api import HasTraits, Int, Dict, List, Property, Enum, Color, Any, on_trait_change
+from enthought.traits.api import HasTraits, Int, Dict, List, Property, Enum, Color, Any, on_trait_change, Event, Button
 from enthought.traits.ui.api import View, Item, ValueEditor, TabularEditor
 from enthought.traits.ui.tabular_adapter import TabularAdapter
 import time
@@ -19,9 +19,11 @@ class Variables(HasTraits):
   vars_table_list = List()  # a list version of vars_pool maintained for the TabularEditor
   sample_number = Int(0)
 
-  add_var_event = Any()
+  clear_data = Button('Clear Data')
+  add_var_event = Event()
 
   view = View(
+           Item(name = 'clear_data', show_label = False),
            Item(
              name = 'vars_table_list',
              editor = TabularEditor(
@@ -55,9 +57,14 @@ class Variables(HasTraits):
     self.vars_pool = new_vars_pool
     self.vars_list += [(new_vars_pool, self.sample_number, time.time())]
   
-  #@on_trait_change('add_var_event')
-  #def add_var_to_plot(self, old, new):
-  #  print "woot"
+  def _clear_data_fired(self):
+    self.clear_data()
+
+  def clear_data(self):
+    """ Clear all recorded data. """
+    self.sample_number = 0
+    self.vars_list = []
+    self.vars_pool = {}
 
   @on_trait_change('vars_pool')
   def update_vars_table(self, old_pool, new_pool):
