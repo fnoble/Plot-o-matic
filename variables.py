@@ -3,7 +3,7 @@ from enthought.traits.ui.api import View, Item, ValueEditor, TabularEditor
 from enthought.traits.ui.tabular_adapter import TabularAdapter
 import time
 
-import math
+import math, numpy
 
 class VariableTableAdapter(TabularAdapter):
   columns = [('Variable name', 0), ('Value', 1)]
@@ -79,7 +79,7 @@ class Variables(HasTraits):
         the variables in the pool in scope.
     """
     try:
-      data = eval(expr, math.__dict__, vars_pool)
+      data = eval(expr, numpy.__dict__, vars_pool)
     except:
       data = None
     return data
@@ -101,6 +101,6 @@ class Variables(HasTraits):
       (vars_pool, sample_num, time) = vars_list_item
       if sample_num > first and (not last or sample_num<last):
         value = self.eval_expr(expr, vars_pool)
-        if value:
+        if value != None:
           data_array += [(value, sample_num, time)]
     return data_array
