@@ -189,11 +189,11 @@ class Plot(HasTraits):
       print list(self.plot.plots.iterkeys())
       print self.get_exprs()
   
-  @on_trait_change('variables.vars_pool')
-  def update_data(self):
-    """ Called when 'vars_pool' is changed in the Variables instance, calls out to update_plot """
-    if self.visible:
-      self.update_plot()
+  #@on_trait_change('variables.vars_pool')
+  #def update_data(self):
+  #  """ Called when 'vars_pool' is changed in the Variables instance, calls out to update_plot """
+  #  if self.visible:
+  #    self.update_plot()
 
 
 
@@ -239,11 +239,11 @@ class Plots(HasTraits, t.Thread):
 
   def run(self):
     """ Thread to update plots. """
-    return
+    #return
     while not self._wants_to_terminate:
       if self.selected_plot:
         self.selected_plot.update_plot()
-      time.sleep(0.2)
+      time.sleep(0.1)
   
   def select_plot(self, plot):
     if self.selected_plot:
