@@ -66,7 +66,8 @@ class Variables(HasTraits):
 
   @on_trait_change('vars_pool')
   def update_vars_table(self, old_pool, new_pool):
-    self.vars_table_list = map(lambda (name, val): (name, repr(val)), list(self.vars_pool.iteritems()))
+    vars_list_unsorted = map(lambda (name, val): (name, repr(val)), list(self.vars_pool.iteritems()))
+    self.vars_table_list = sorted(vars_list_unsorted, key=(lambda (name, val): name.lower()))
     
   def reset_variables(self):
     self.vars_pool = {}
