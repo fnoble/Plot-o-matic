@@ -117,7 +117,7 @@ class Plot(HasTraits):
   def update_name(self, new_name):
     self.plot.title = new_name
     self.plot.request_redraw()
-    
+
   @on_trait_change('x_label')
   def update_x_label(self, new_name):
     self.plot.index_axis.title = new_name
@@ -129,7 +129,7 @@ class Plot(HasTraits):
     self.plot.request_redraw()
     
   def update_plot_data(self, expr):
-    data = self.variables.get_data_array(expr, first=self.expr_last_update[expr])
+    data = self.variables.new_expression(expr).get_array(self.expr_last_update[expr])
     self.expr_last_update[expr] += len(data)
     
     xs = []

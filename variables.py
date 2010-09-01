@@ -1,4 +1,4 @@
-from enthought.traits.api import HasTraits, Int, Dict, List, Property, Enum, Color, Any, on_trait_change, Event, Button
+from enthought.traits.api import HasTraits, Int, Dict, List, Property, Enum, Color, Instance, Str, Any, on_trait_change, Event, Button
 from enthought.traits.ui.api import View, Item, ValueEditor, TabularEditor, HSplit
 from enthought.traits.ui.tabular_adapter import TabularAdapter
 import time
@@ -24,10 +24,10 @@ class Variables(HasTraits):
 
   add_var_event = Event()
 
-  clear_data_button = Button('Clear')
+  clear_button = Button('Clear')
   view = View(
            HSplit(
-             Item(name = 'clear_data_button', show_label = False),
+             Item(name = 'clear_button', show_label = False),
              Item(name = 'max_samples', label = 'Max samples'),
              Item(name = 'sample_count', label = 'Samples')
            ),
@@ -47,6 +47,9 @@ class Variables(HasTraits):
            height = .2
          )
   
+  def new_expression(self, expr):
+    return Expression(self, expr)
+    
   def update_variables(self, data_dict):
     """
         Receive a dict of variables from a decoder and integrate them
@@ -73,8 +76,8 @@ class Variables(HasTraits):
     self.vars_list = self.vars_list[-self.max_samples:]
     self.sample_count = len(self.vars_list)
   
-  @on_trait_change('clear_data_button')
-  def clear_data(self):
+  @on_trait_change('clear_button')
+  def clear(self):
     """ Clear all recorded data. """
     self.sample_number = 0
     self.vars_list = []
@@ -87,25 +90,28 @@ class Variables(HasTraits):
     vars_list_unsorted = map(lambda (name, val): (name, repr(val), self.vars_pool_age[name], False), list(self.vars_pool.iteritems()))
     self.vars_table_list = sorted(vars_list_unsorted, key=(lambda (name, v, a, b): name.lower()))
     
-  def reset_variables(self):
-    self.vars_pool = {}
-    
-  def eval_expr(self, expr, vars_pool):
+  def _eval_expr(self, expr, vars_pool=None):
     """
         Returns the value of a python expression evaluated with 
-        the variables in the pool in scope.
+        the variables in the pool in scope. Used internally by
+        Expression. Users should use Expression instead as it
+        has caching etc.
     """
+    if vars_pool == None:
+      vars_pool = self.vars_pool
+
     try:
       data = eval(expr, numpy.__dict__, vars_pool)
     except:
       data = None
     return data
-    
-  def get_data_array(self, expr, first=0, last=None):
+
+  def _get_array(self, expr, first=0, last=None):
     """
         Returns an array of tuples containing the all the values of an
         the supplied expression and the sample numbers and times corresponding to
-        these values.
+        these values. Used internally by Expression, users should use Expression
+        directly as it has caching etc.
     """
     data_array = []
     if first < 0:
@@ -117,7 +123,25 @@ class Variables(HasTraits):
     for vars_list_item in self.vars_list:
       (vars_pool, sample_num, time) = vars_list_item
       if sample_num > first and (not last or sample_num<last):
-        value = self.eval_expr(expr, vars_pool)
+        value = self._eval_expr(expr, vars_pool)
         if value != None:
           data_array += [(value, sample_num, time)]
     return data_array
+
+class Expression(HasTraits):
+  _vars = Instance(Variables)
+  _expr = Str('')
+
+  def __init__(self, variables, expr, **kwargs):
+    HasTraits.__init__(self, **kwargs)
+    self._vars = variables
+    self.set_expr(expr)
+
+  def set_expr(self, expr):
+    self._expr = expr
+
+  def get_curr_value(self):
+    return self._vars._eval_expr(self._expr)
+
+  def get_array(self, first=0, last=None):
+    return self._vars._get_array(self._expr, first, last)
