@@ -137,7 +137,7 @@ class Plot(HasTraits):
             first = int(self.x_min)
           if not self.x_max_auto:
             last = int(self.x_max) + 1
-          data = self.variables.get_data_array(expr, first=first, last=last)
+          data = self.variables.new_expression(expr).get_array(first, last)
     
           xs = [0]
           ys = [0]
