@@ -1,5 +1,5 @@
 from enthought.traits.api import HasTraits, Int, Dict, List, Property, Enum, Color, Instance, Str, Any, on_trait_change, Event, Button
-from enthought.traits.ui.api import View, Item, ValueEditor, TabularEditor, HSplit
+from enthought.traits.ui.api import View, Item, ValueEditor, TabularEditor, HSplit, TextEditor
 from enthought.traits.ui.tabular_adapter import TabularAdapter
 import time
 
@@ -65,14 +65,14 @@ class Variables(HasTraits):
     
     # We update into a new dict rather than vars_pool due to pythons pass by reference
     # behaviour, we need a fresh object to put on our array
-    new_vars_pool = {}
+    new_vars_pool = {} #'foo': self.sample_number, 'bar': time.time()}
     new_vars_pool.update(self.vars_pool)
     new_vars_pool.update(data_dict)
     if '' in new_vars_pool: 
       del new_vars_pool[''] # weed out undesirables
     
     self.vars_pool = new_vars_pool
-    self.vars_list += [(new_vars_pool, self.sample_number, time.time())]
+    self.vars_list += [new_vars_pool]
     self.vars_list = self.vars_list[-self.max_samples:]
     self.sample_count = len(self.vars_list)
   
@@ -120,17 +120,21 @@ class Variables(HasTraits):
         first = 0
     if last and last < 0:
       last = self.sample_number - last
-    for vars_list_item in self.vars_list:
-      (vars_pool, sample_num, time) = vars_list_item
-      if sample_num > first and (not last or sample_num<last):
-        value = self._eval_expr(expr, vars_pool)
-        if value != None:
-          data_array += [(value, sample_num, time)]
+    if last == None:
+      last = self.sample_number
+
+    data = [self._eval_expr(expr, vs) for vs in self.vars_list[first:last]]
+    data = [d for d in data if d != None]
+    data_array = numpy.array(data)
     return data_array
 
 class Expression(HasTraits):
   _vars = Instance(Variables)
   _expr = Str('')
+  _data_array_cache = numpy.array([])
+  _data_array_cache_index = Int(0)
+
+  view = View(Item('_expr', show_label = False, editor=TextEditor(enter_set=True, auto_set=False)))
 
   def __init__(self, variables, expr, **kwargs):
     HasTraits.__init__(self, **kwargs)
@@ -138,10 +142,19 @@ class Expression(HasTraits):
     self.set_expr(expr)
 
   def set_expr(self, expr):
-    self._expr = expr
+    if self._expr != expr:
+      self._data_array_cache = numpy.array([])
+      self._data_array_cache_index = 0
+      self._expr = expr
 
   def get_curr_value(self):
     return self._vars._eval_expr(self._expr)
 
   def get_array(self, first=0, last=None):
-    return self._vars._get_array(self._expr, first, last)
+    if last == None:
+      last = self._vars.sample_number
+    if last > self._data_array_cache_index:
+      #print "Cache miss of", (last - self._data_array_cache_index)
+      self._data_array_cache = numpy.append(self._data_array_cache, self._vars._get_array(self._expr, self._data_array_cache_index, last))
+      self._data_array_cache_index = last
+    return self._data_array_cache[first:last]
