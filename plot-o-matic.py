@@ -171,7 +171,7 @@ vs = Variables()
 viewers = Viewers(variables = vs)
 
 p0 = Plot(name='Plot0')
-p1 = Plot(name='Plot1')
+p1 = MPLPlot(name='Plot1')
 p2 = Plot(name='Plot2')
 p3 = Plot(name='Plot3')
 p4 = Plot(name='Plot4')
