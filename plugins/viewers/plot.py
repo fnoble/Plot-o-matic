@@ -134,10 +134,11 @@ class Plot(Viewer):
     self.update()
 
   def update(self):
-    ys = self.y_exprs[0].get_array()
-    xs = range(len(ys))
-    self.plot_data.set_data('y', ys)
-    self.plot_data.set_data('x', xs)
-    self.plot.request_redraw()
+    if len(self.y_exprs) >= 1:
+      ys = self.y_exprs[0].get_array()
+      xs = range(len(ys))
+      self.plot_data.set_data('y', ys)
+      self.plot_data.set_data('x', xs)
+      self.plot.request_redraw()
 
 
