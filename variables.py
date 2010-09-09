@@ -57,20 +57,24 @@ class Variables(HasTraits):
     """
     self.sample_number += 1
     
-    # Make a new age dict for the updated vars and then update our global age dict
-    data_dict_age = {}
-    for key in data_dict.iterkeys():
-      data_dict_age[key] = self.sample_number
-    self.vars_pool_age.update(data_dict_age)
-    
     # We update into a new dict rather than vars_pool due to pythons pass by reference
     # behaviour, we need a fresh object to put on our array
-    new_vars_pool = {} #'foo': self.sample_number, 'bar': time.time()}
+    new_vars_pool = {}
     new_vars_pool.update(self.vars_pool)
     new_vars_pool.update(data_dict)
+    new_vars_pool.update({'sample_num': self.sample_number, 'system_time': time.time()})
     if '' in new_vars_pool: 
       del new_vars_pool[''] # weed out undesirables
-    
+
+    print
+    print new_vars_pool
+
+    # Make a new age dict for the updated vars and then update our global age dict
+    data_dict_age = {}
+    for key in new_vars_pool.iterkeys():
+      data_dict_age[key] = self.sample_number
+    self.vars_pool_age.update(data_dict_age)
+
     self.vars_pool = new_vars_pool
     self.vars_list += [new_vars_pool]
     self.vars_list = self.vars_list[-self.max_samples:]
@@ -87,7 +91,9 @@ class Variables(HasTraits):
   def update_vars_table(self, old_pool, new_pool):
     #self.vars_table_list = map(lambda (name, val): (name, repr(val), self.vars_pool_age[name], self.vars_pool_age[name] == self.sample_number), list(self.vars_pool.iteritems()))
     #time.sleep(0.1)
-    vars_list_unsorted = map(lambda (name, val): (name, repr(val), self.vars_pool_age[name], False), list(self.vars_pool.iteritems()))
+    vars_pool = self.vars_pool
+    #vars_pool['system_time'] = time.ctime(vars_pool['system_time'])
+    vars_list_unsorted = map(lambda (name, val): (name, repr(val), self.vars_pool_age[name], False), list(vars_pool.iteritems()))
     self.vars_table_list = sorted(vars_list_unsorted, key=(lambda (name, v, a, b): name.lower()))
     
   def _eval_expr(self, expr, vars_pool=None):
