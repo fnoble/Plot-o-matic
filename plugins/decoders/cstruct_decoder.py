@@ -39,8 +39,8 @@ class CStructDecoder(DataDecoder):
     Item(label= "(use '_' to ignore a field)"),
     title='C struct decoder'
   )
-  struct_format = Str('=HIB32dd3di32d')
-  variable_names = Str('type,len,chksum,corrs,timestamp,gs_xyz,gs_survey,snrs')
+  struct_format = Str('=HIB32dd32d3d3di')
+  variable_names = Str('type,len,chksum,corrs,timestamp,snrs,pos,vel,no_receivers')
   
   def decode(self, data):
     """
