@@ -47,7 +47,6 @@ class TVTKViewer(Viewer):
     self.m.input = self.cs.output # or m.input = cs.get_output()
     self.a = tvtk.Actor(mapper=self.m)
     self.scene.add_actors(self.a)
-    print self.a.__dict__
     self.e = self.variables.new_expression('[fm_fAirframe_x/300.0,fm_fAirframe_y/300.0,fm_fAirframe_z/300.0]')
     pass
 
