@@ -176,14 +176,14 @@ p2 = Plot(name='Plot2')
 p3 = Plot(name='Plot3')
 p4 = Plot(name='Plot4')
 
-#vv = TVTKViewer()
+vv = TVTKViewer()
 
 viewers.add_viewer(p0)
 viewers.add_viewer(p1)
 viewers.add_viewer(p2)
 viewers.add_viewer(p3)
 viewers.add_viewer(p4)
-#viewers.add_viewer(vv)
+viewers.add_viewer(vv)
 
 #a = TestDriver()
 #f = SimpleFileDriver()
