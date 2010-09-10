@@ -1,6 +1,9 @@
 import threading as t
-from enthought.traits.api import HasTraits, Int, Str, List
+from enthought.traits.api import HasTraits, Int, Str, List, DelegatesTo, Instance
 from data_decoder import DataDecoder
+
+from variables import Variables
+from viewers import Viewers
 
 class IODriver(t.Thread, HasTraits):
   """ 
@@ -68,3 +71,33 @@ class IODriver(t.Thread, HasTraits):
     """ Pass data on to the decoding layer. """
     for decoder in self._decoders: #self._decoder_list.get_decoders():
       decoder._receive_callback(data)
+
+
+
+class IODriverList(HasTraits):
+  """
+      Maintains the list of input drivers currently in use and provides
+      facilities to add and remove drivers.
+  """
+  io_drivers = List(IODriver)
+  viewers = DelegatesTo('viewers_instance')
+  viewers_instance = Instance(Viewers)
+  variables = Instance(Variables)
+  
+  def start_all(self):
+    map(lambda d: d.start(), self.io_drivers)
+
+  def stop_all(self):
+    map(lambda d: d.stop(), self.io_drivers)
+
+  def _remove_io_driver(self, io_driver):
+    print "Removing IO driver:", io_driver.name
+    io_driver.stop()
+    self.io_drivers.remove(io_driver)
+
+  def _add_io_driver(self, io_driver):
+    print "Adding IO driver:", io_driver.name
+    io_driver.start()
+    self.io_drivers.append(io_driver)
+
+

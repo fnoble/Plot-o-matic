@@ -8,7 +8,7 @@ try:
 except ImportError:
   pass
 
-from io_driver import IODriver
+from io_driver import IODriver, IODriverList
 from data_decoder import DataDecoder
 from viewers import Viewer, Viewers
 from variables import Variables
@@ -21,40 +21,11 @@ from enthought.traits.api import HasTraits, Str, Regex, List, Instance, Delegate
 from enthought.traits.ui.api import TreeEditor, TreeNode, View, Item, VSplit, \
   HGroup, Handler, Group, Include, ValueEditor, HSplit, ListEditor, InstanceEditor
 from enthought.traits.ui.menu import Menu, Action, Separator
-#from enthought.traits.ui.wx.tree_editor import NewAction, CopyAction, CutAction, \
-#  PasteAction, DeleteAction, RenameAction
 
 PROFILE = False
 if PROFILE:
   import yappi
   yappi.start()
-
-class IODriverList(HasTraits):
-  """
-      Maintains the list of input drivers currently in use and provides
-      facilities to add and remove drivers.
-  """
-  io_drivers = List(IODriver)
-  viewers = DelegatesTo('viewers_instance')
-  viewers_instance = Instance(Viewers)
-  variables = Instance(Variables)
-  
-  def start_all(self):
-    map(lambda d: d.start(), self.io_drivers)
-
-  def stop_all(self):
-    map(lambda d: d.stop(), self.io_drivers)
-
-  def _remove_io_driver(self, io_driver):
-    print "Removing IO driver:", io_driver.name
-    io_driver.stop()
-    self.io_drivers.remove(io_driver)
-
-  def _add_io_driver(self, io_driver):
-    print "Adding IO driver:", io_driver.name
-    io_driver.start()
-    self.io_drivers.append(io_driver)
-
 
 
 def find_io_driver_plugins():
@@ -270,20 +241,7 @@ class PlotOMatic(HasTraits):
     self.io_driver_list.stop_all()
       
 
-p0 = Plot(name='Plot0')
-p1 = MPLPlot(name='Plot1')
-p2 = Plot(name='Plot2')
-p3 = Plot(name='Plot3')
-p4 = Plot(name='Plot4')
-
-vv = TVTKViewer()
-
-viewers._add_viewer(p0)
-viewers._add_viewer(p1)
-viewers._add_viewer(p2)
-viewers._add_viewer(p3)
-viewers._add_viewer(p4)
-viewers._add_viewer(vv)
+viewers._add_viewer(MPLPlot())
 
 #iodl = IODriverList(io_drivers = [stdi], viewers_instance = viewers)
 proj = PlotOMatic(io_driver_list = iodl, variables = vs, viewers = viewers)
