@@ -16,7 +16,7 @@ class MPLPlot(Viewer):
       The function plotted is calculated using 'expr' which should also be set on init
       and can be any python expression using the variables in the pool.
   """
-  
+  name = Str('MPL Plot')
   figure = Instance(Figure, ())
   expr = Str
   
