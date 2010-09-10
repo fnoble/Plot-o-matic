@@ -66,9 +66,6 @@ class Variables(HasTraits):
     if '' in new_vars_pool: 
       del new_vars_pool[''] # weed out undesirables
 
-    print
-    print new_vars_pool
-
     # Make a new age dict for the updated vars and then update our global age dict
     data_dict_age = {}
     for key in new_vars_pool.iterkeys():
