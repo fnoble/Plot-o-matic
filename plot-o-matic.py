@@ -46,7 +46,6 @@ def get_viewer_plugin_by_name(name):
 
 
 class TreeHandler(Handler):
-
   remove_io_driver_action = Action(name='Remove', action='handler.remove_io_driver(editor,object)')
   add_io_driver_actions_menu = Instance(Menu)
 
@@ -115,17 +114,6 @@ class TreeHandler(Handler):
     editor.update_editor()
     
 
-vs = Variables()
-viewers = Viewers(variables = vs)
-
-#a = TestDriver()
-#f = SimpleFileDriver()
-u = UDPDriver()
-#stdi = StdinDriver()
-
-iodl = IODriverList(io_drivers = [u], variables = vs, viewers_instance = viewers)
-
-tree_handler = TreeHandler()
 
 class PlotOMatic(HasTraits):
   io_driver_list = Instance(IODriverList)
@@ -133,6 +121,7 @@ class PlotOMatic(HasTraits):
   viewers = Instance(Viewers)
   selected_viewer = Instance(Viewer)
   
+  tree_handler = TreeHandler()
 
   viewer_node = TreeNode( 
     node_for  = [Viewer],
@@ -241,25 +230,16 @@ class PlotOMatic(HasTraits):
     self.io_driver_list.stop_all()
       
 
-viewers._add_viewer(MPLPlot())
+vs = Variables()
+viewers = Viewers(variables = vs)
 
-#iodl = IODriverList(io_drivers = [stdi], viewers_instance = viewers)
+u = UDPDriver()
+viewers._add_viewer(MPLPlot())
+u._add_decoder(JobySimDecoder())
+
+iodl = IODriverList(io_drivers = [u], variables = vs, viewers_instance = viewers)
 proj = PlotOMatic(io_driver_list = iodl, variables = vs, viewers = viewers)
   
-#c = CSVDecoder()
-#r = RegexDecoder()
-#n = NullDecoder()
-#s = CStructDecoder()
-#spd = SimplePlotDecoder()
-jsd = JobySimDecoder()
-
-#f._add_decoder(c)
-#u._add_decoder(s)
-#u._add_decoder(spd)
-u._add_decoder(jsd)
-#stdi._add_decoder(spd)
-#f._add_decoder(n)
-#f._add_decoder(r)
 
 proj.start()
 proj.configure_traits()
