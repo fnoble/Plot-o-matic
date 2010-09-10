@@ -56,9 +56,13 @@ class IODriver(t.Thread, HasTraits):
     """ Used internally to stop the thread for the input driver, if you have clean-up code put it in close. """
     self._wants_to_terminate = True
    
-  def _register_decoder(self, decoder):
-    """ Used internally to register decoders so they receive data from the input driver. """
+  def _add_decoder(self, decoder):
+    """ Used internally to add decoders so they receive data from the input driver. """
     self._decoders += [decoder]
+
+  def _remove_decoder(self, decoder):
+    """ Used internally to remove decoders from an input driver. """
+    self._decoders.remove(decoder)
     
   def pass_data(self, data):
     """ Pass data on to the decoding layer. """

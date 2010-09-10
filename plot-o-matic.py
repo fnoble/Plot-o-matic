@@ -37,6 +37,7 @@ class IODriverList(HasTraits):
   io_drivers = List(IODriver)
   viewers = DelegatesTo('viewers_instance')
   viewers_instance = Instance(Viewers)
+  variables = Instance(Variables)
   
   def start_all(self):
     map(lambda d: d.start(), self.io_drivers)
@@ -44,39 +45,133 @@ class IODriverList(HasTraits):
   def stop_all(self):
     map(lambda d: d.stop(), self.io_drivers)
 
-class TreeHandler(Handler):
-  remove_action = Action(name='Remove', action='handler.remove(editor,object)')
-  new_io_driver_action = Action(name='Add Input Driver', action='handler.new_io_driver(editor,object)')
-  
-  def remove(self, editor, object):
-    io_driver_object.stop()
-    io_drivers.remove(io_driver_object)
-    
-  def new_io_driver(self, editor, object):
-    try:
-      print "Adding IO driver"
-      #object.io_drivers += [td.TestDriver()]
-      print editor.__dict__
-      editor.insert_child(0, td.TestDriver())
-      print editor.nodes[0].get_children()
-      print object.io_drivers
-    except Exception as e:
-      print e
+  def _remove_io_driver(self, io_driver):
+    print "Removing IO driver:", io_driver.name
+    io_driver.stop()
+    self.io_drivers.remove(io_driver)
 
-class Project(HasTraits):
+  def _add_io_driver(self, io_driver):
+    print "Adding IO driver:", io_driver.name
+    io_driver.start()
+    self.io_drivers.append(io_driver)
+
+
+
+def find_io_driver_plugins():
+  return IODriver.__subclasses__()
+def get_io_driver_plugin_by_name(name):
+  return filter(lambda x: x.__name__ == name, find_io_driver_plugins())[0]
+
+def find_decoder_plugins():
+  return DataDecoder.__subclasses__()
+def get_decoder_plugin_by_name(name):
+  return filter(lambda x: x.__name__ == name, find_decoder_plugins())[0]
+
+def find_viewer_plugins():
+  return Viewer.__subclasses__()
+def get_viewer_plugin_by_name(name):
+  return filter(lambda x: x.__name__ == name, find_viewer_plugins())[0]
+
+
+
+class TreeHandler(Handler):
+
+  remove_io_driver_action = Action(name='Remove', action='handler.remove_io_driver(editor,object)')
+  add_io_driver_actions_menu = Instance(Menu)
+
+  remove_decoder_action = Action(name='Remove', action='handler.remove_decoder(editor,object)')
+  add_decoder_actions_menu = Instance(Menu)
+
+  remove_viewer_action = Action(name='Remove', action='handler.remove_viewer(editor,object)')
+  add_viewer_actions_menu = Instance(Menu)
+
+  def _add_io_driver_actions_menu_default(self):
+    actions = []
+    for io_driver_plugin in find_io_driver_plugins():
+      actions += [Action(
+        name = io_driver_plugin.__name__,
+        action = 'handler.add_io_driver(editor,object,"%s")' % io_driver_plugin.__name__
+      )]
+    return Menu(name = 'Add', *actions)
+
+  def remove_io_driver(self, editor, io_driver_object):
+    io_driver_list = editor._menu_parent_object
+    io_driver_list._remove_io_driver(io_driver_object)
+    editor.update_editor()
+
+  def add_io_driver(self, editor, io_driver_list, new_io_driver_name):
+    new_io_driver = get_io_driver_plugin_by_name(new_io_driver_name)()
+    io_driver_list._add_io_driver(new_io_driver)
+    editor.update_editor()
+
+  def _add_decoder_actions_menu_default(self):
+    actions = []
+    for decoder_plugin in find_decoder_plugins():
+      actions += [Action(
+        name = decoder_plugin.__name__,
+        action = 'handler.add_decoder(editor,object,"%s")' % decoder_plugin.__name__
+      )]
+    return Menu(name = 'Add', *actions)
+
+  def remove_decoder(self, editor, decoder_object):
+    parent_io_driver = editor._menu_parent_object
+    parent_io_driver._remove_decoder(decoder_object)
+    editor.update_editor()
+
+  def add_decoder(self, editor, io_driver, decoder_name):
+    io_driver_list = editor._menu_parent_object
+    new_decoder = get_decoder_plugin_by_name(decoder_name)(variables = io_driver_list.variables)
+    io_driver._add_decoder(new_decoder)
+    editor.update_editor()
+    
+  def _add_viewer_actions_menu_default(self):
+    actions = []
+    for viewer_plugin in find_viewer_plugins():
+      actions += [Action(
+        name = viewer_plugin.__name__,
+        action = 'handler.add_viewer(editor,object,"%s")' % viewer_plugin.__name__
+      )]
+    return Menu(name = 'Add', *actions)
+
+  def remove_viewer(self, editor, viewer_object):
+    viewers = editor._menu_parent_object.viewers_instance
+    viewers._remove_viewer(viewer_object)
+    editor.update_editor()
+
+  def add_viewer(self, editor, object, viewer_name):
+    new_viewer = get_viewer_plugin_by_name(viewer_name)()
+    object.viewers_instance._add_viewer(new_viewer)
+    editor.update_editor()
+    
+
+vs = Variables()
+viewers = Viewers(variables = vs)
+
+#a = TestDriver()
+#f = SimpleFileDriver()
+u = UDPDriver()
+#stdi = StdinDriver()
+
+iodl = IODriverList(io_drivers = [u], variables = vs, viewers_instance = viewers)
+
+tree_handler = TreeHandler()
+
+class PlotOMatic(HasTraits):
   io_driver_list = Instance(IODriverList)
   variables = Instance(Variables)
   viewers = Instance(Viewers)
   selected_viewer = Instance(Viewer)
   
+
   viewer_node = TreeNode( 
     node_for  = [Viewer],
     auto_open = True,
     label     = 'name',
+    menu      = Menu( tree_handler.remove_viewer_action ),
     icon_path = 'icons/',
     icon_item = 'plot.png'
   )
-  
+ 
   tree_editor = TreeEditor(
     nodes = [
       TreeNode( 
@@ -84,6 +179,7 @@ class Project(HasTraits):
         auto_open = True,
         children  = 'io_drivers',
         label     = '=Input Drivers',
+        menu      = Menu( tree_handler.add_io_driver_actions_menu ),
         view      = View(),
       ),
       TreeNode( 
@@ -92,6 +188,10 @@ class Project(HasTraits):
         children  = '_decoders',
         label     = 'name',
         add       = [DataDecoder],
+        menu      = Menu(
+          tree_handler.remove_io_driver_action,
+          tree_handler.add_decoder_actions_menu
+        ),
         icon_path = 'icons/',
         icon_open = 'input.png',
         icon_group = 'input.png'
@@ -101,6 +201,7 @@ class Project(HasTraits):
         auto_open = True,
         children  = '',
         label     = 'name',
+        menu      = Menu( tree_handler.remove_decoder_action ),
         icon_path = 'icons/',
         icon_item = 'decoder.png'
       ),
@@ -109,6 +210,7 @@ class Project(HasTraits):
         auto_open = True,
         children  = 'viewers',
         label     = '=Viewers',
+        menu      = Menu( tree_handler.add_viewer_actions_menu ),
         view      = View()
       ),
       viewer_node
@@ -148,7 +250,7 @@ class Project(HasTraits):
     resizable = True,
     width = 1000,
     height = 600,
-    handler = TreeHandler()
+    handler = tree_handler
   )
   
   def __init__(self, **kwargs):
@@ -167,8 +269,6 @@ class Project(HasTraits):
     self.viewers.stop()
     self.io_driver_list.stop_all()
       
-vs = Variables()
-viewers = Viewers(variables = vs)
 
 p0 = Plot(name='Plot0')
 p1 = MPLPlot(name='Plot1')
@@ -178,36 +278,30 @@ p4 = Plot(name='Plot4')
 
 vv = TVTKViewer()
 
-viewers.add_viewer(p0)
-viewers.add_viewer(p1)
-viewers.add_viewer(p2)
-viewers.add_viewer(p3)
-viewers.add_viewer(p4)
-viewers.add_viewer(vv)
-
-#a = TestDriver()
-#f = SimpleFileDriver()
-u = UDPDriver()
-#stdi = StdinDriver()
+viewers._add_viewer(p0)
+viewers._add_viewer(p1)
+viewers._add_viewer(p2)
+viewers._add_viewer(p3)
+viewers._add_viewer(p4)
+viewers._add_viewer(vv)
 
 #iodl = IODriverList(io_drivers = [stdi], viewers_instance = viewers)
-iodl = IODriverList(io_drivers = [u], viewers_instance = viewers)
-proj = Project(io_driver_list = iodl, variables = vs, viewers = viewers)
+proj = PlotOMatic(io_driver_list = iodl, variables = vs, viewers = viewers)
   
-#c = CSVDecoder(variables = vs)
-#r = RegexDecoder(variables = vs)
-#n = NullDecoder(variables = vs)
-#s = CStructDecoder(variables = vs)
-#spd = SimplePlotDecoder(variables = vs)
-jsd = JobySimDecoder(variables = vs)
+#c = CSVDecoder()
+#r = RegexDecoder()
+#n = NullDecoder()
+#s = CStructDecoder()
+#spd = SimplePlotDecoder()
+jsd = JobySimDecoder()
 
-#f._register_decoder(c)
-#u._register_decoder(s)
-#u._register_decoder(spd)
-u._register_decoder(jsd)
-#stdi._register_decoder(spd)
-#f._register_decoder(n)
-#f._register_decoder(r)
+#f._add_decoder(c)
+#u._add_decoder(s)
+#u._add_decoder(spd)
+u._add_decoder(jsd)
+#stdi._add_decoder(spd)
+#f._add_decoder(n)
+#f._add_decoder(r)
 
 proj.start()
 proj.configure_traits()

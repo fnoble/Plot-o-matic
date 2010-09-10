@@ -80,8 +80,12 @@ class Viewers(HasTraits, t.Thread):
     """
     map(lambda v: v.stop(), self.viewers)
 
-  def add_viewer(self, viewer):
+  def _add_viewer(self, viewer):
     viewer.variables = self.variables
     self.viewers += [viewer]
     viewer.start()
+
+  def _remove_viewer(self, viewer):
+    viewer.stop()
+    self.viewers.remove(viewer)
 
