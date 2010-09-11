@@ -12,12 +12,14 @@ import plugins.io_drivers.test as td
 import plugins.io_drivers.simple_file as sf
 import plugins.io_drivers.udp as udpd
 import plugins.io_drivers.stdin as stdind
+import plugins.io_drivers.iv as iv
 import plugins.decoders.csv_decoder as csvd
 import plugins.decoders.regex_decoder as rxd
 import plugins.decoders.null_decoder as nulld
 import plugins.decoders.cstruct_decoder as structd
 import plugins.decoders.simpleplot as sp
 import plugins.decoders.jobysim_decoder as js
+import plugins.decoders.paparazzi_ivy_decoder as pivd
 import inspect as ins
 from io_driver import IODriver
 from data_decoder import DataDecoder
@@ -219,27 +221,30 @@ pls.add_plot('', name='Plot4')
 
 #a = td.TestDriver()
 #f = sf.SimpleFileDriver()
-u = udpd.UDPDriver()
+#u = udpd.UDPDriver()
+ivd = iv.IvyDriver()
 #stdi = stdind.StdinDriver()
 
 #iodl = IODriverList(io_drivers = [stdi], plots_instance = pls)
-iodl = IODriverList(io_drivers = [u], plots_instance = pls)
+iodl = IODriverList(io_drivers = [ivd], plots_instance = pls)
 proj = Project(io_driver_list = iodl, variables = vs, plots = pls)
   
 #c = csvd.CSVDecoder(variables = vs)
 #r = rxd.RegexDecoder(variables = vs)
 #n = nulld.NullDecoder(variables = vs)
+pd = pivd.PaparazziIvyDecoder(variables = vs)
 #s = structd.CStructDecoder(variables = vs)
 #spd = sp.SimplePlotDecoder(variables = vs)
-jsd = js.JobySimDecoder(variables = vs)
+#jsd = js.JobySimDecoder(variables = vs)
 
 #f._register_decoder(c)
 #u._register_decoder(s)
 #u._register_decoder(spd)
-u._register_decoder(jsd)
+#u._register_decoder(jsd)
 #stdi._register_decoder(spd)
 #f._register_decoder(n)
 #f._register_decoder(r)
+ivd._register_decoder(pd)
 
 iodl.start_all()
 pls.start()
