@@ -5,6 +5,9 @@ import time
 
 import math, numpy
 
+expression_context = {}
+expression_context.update(numpy.__dict__)
+
 
 class VariableTableAdapter(TabularAdapter):
   columns = [('Variable name', 0), ('Value', 1)]
@@ -96,7 +99,7 @@ class Variables(HasTraits):
       vars_pool = self.vars_pool
 
     try:
-      data = eval(expr, numpy.__dict__, vars_pool)
+      data = eval(expr, expression_context, vars_pool)
     except:
       data = None
     return data
@@ -118,8 +121,14 @@ class Variables(HasTraits):
     if last == None:
       last = self.sample_number
 
-    data = [self._eval_expr(expr, vs) for vs in self.vars_list[first:last]]
-    data = [d for d in data if d != None]
+    #data = [self._eval_expr(expr, vs) for vs in self.vars_list[first:last]]
+    #data = [d for d in data if d is not None]
+
+    try:
+      data = [eval(expr, expression_context, vs) for vs in self.vars_list[first:last]]
+    except Exception as e:
+      data = []
+
     data_array = numpy.array(data)
     return data_array
 
