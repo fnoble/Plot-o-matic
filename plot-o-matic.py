@@ -23,9 +23,10 @@ from enthought.traits.ui.api import TreeEditor, TreeNode, View, Item, VSplit, \
 from enthought.traits.ui.menu import Menu, Action, Separator
 
 PROFILE = False
+PROFILE_BUILTINS = True
 if PROFILE:
   import yappi
-  yappi.start()
+  yappi.start(PROFILE_BUILTINS)
 
 
 def find_io_driver_plugins():
