@@ -63,19 +63,20 @@ def ParseMessages():
 ##-------end of extra message filtering code-----
   return message_dictionary
 
+def try_float(x):
+  try:
+    return float(x)
+  except:
+    return x
+
 class PaparazziIvyDecoder(DataDecoder):
   """
       Decodes Ivy messages.
   """
   name = Str('Ivy Decoder')
   view = View(
-#    Item(name = 'separator', label='Field separator'),
-#    Item(name = 'variable_names', label='Field names'),
-#    Item(label= "(use '_' to ignore a field)"),
     title='Ivy decoder'
   )
-#  separator = Str(',')
-#  variable_names = Str('_,a,b,c,d')
 
   message_dict = ParseMessages()
 
@@ -84,25 +85,12 @@ class PaparazziIvyDecoder(DataDecoder):
         Decode Ivy input data then assign variables based on a message formatter given by the paparazzi messages.xml (or mercuryX.xml) file.
     """
     data_list = data.split(' ')
-    ac_id = data_list[0]
-    message_name = data_list[1] 
-    values = data_list[2:]
-    data_dict = {}
-#    print self.message_dict
-    field_names = self.message_dict[message_name]
-    if not len(field_names)==len(values):
-      print '\nMessage name: ', message_name
-      print 'Field length/names: ', len(field_names), '/', field_names
-      print 'Data length/values: ', len(values), '/', values, '\n'
-      sys.exit(1)
+    #ac_id = data_list[0]
     
-    for n, field_name in enumerate(field_names):
-      var_name = message_name+'_'+field_name
-      try:
-        data_dict[var_name] = float(values[n])
-      except:
-        pass
+    message_name = data_list[1] 
+    values = map(try_float, data_list[2:])
+    field_names = [message_name + '_' + s for s in self.message_dict[message_name]]
+
+    data_dict = dict(zip(field_names, values)) 
     return data_dict
-      
-#    return None
     
