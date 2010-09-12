@@ -23,11 +23,11 @@ class IvyMessagesInterface():
       pass
   def InitIvy(self, initIvy):
     if initIvy:
-      IvyInit("Messages %i" % os.getpid(), "READY", 0, lambda x,y: y, lambda x,y: y)
-#      IvyInit("Messages %i" % os.getpid())
-      logging.getLogger('Ivy').setLevel(logging.WARN)
+      IvyInit("Messages %i" % os.getpid(), "READY")
+      logging.getLogger('Ivy').setLevel(logging.ERROR)
       IvyStart("")
-    self.ivy_id = IvyBindMsg(self.OnIvyMsg, "(.*)")
+      self.ivy_id = IvyBindMsg(self.OnIvyMsg, "(.*)")
+      print self.ivy_id
   def OnIvyMsg(self, agent, *larg):
     self.callback(larg[0])
 
@@ -38,11 +38,9 @@ class IvyDriver(IODriver):
   _use_thread = False 
   name = Str('Ivy Driver')
   view = View(
-#    Item(name='foo', label='Foo'),
     title='Ivy input driver'
   )
 
-#  foo = 'foobar'
   ivyInterface = Instance(IvyMessagesInterface)
   initd = Instance(bool,False)
 
