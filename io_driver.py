@@ -12,6 +12,7 @@ class IODriver(t.Thread, HasTraits):
   """
   _decoders = List(DataDecoder)
   _wants_to_terminate = False
+  _use_thread = True
   name = Str('Input Driver')
   
   def __init__(self, **kwargs):
@@ -43,12 +44,13 @@ class IODriver(t.Thread, HasTraits):
     
   def run(self):
     """ Used internally for the threading interface, you should put your code in receive. """
-    while not self._wants_to_terminate:
-      data = self.receive()
-      if data:
-        self.pass_data(data)
-    print "IO driver thread terminating:", self.name
-    self.close()
+    if self._use_thread:
+      while not self._wants_to_terminate:
+        data = self.receive()
+        if data:
+          self.pass_data(data)
+      print "IO driver thread terminating:", self.name
+      self.close()
     
   def start(self):
     """ Used internally to start the thread for the input driver, if you have init code put it in open. """
@@ -57,7 +59,10 @@ class IODriver(t.Thread, HasTraits):
 
   def stop(self):
     """ Used internally to stop the thread for the input driver, if you have clean-up code put it in close. """
-    self._wants_to_terminate = True
+    if self._use_thread:
+      self._wants_to_terminate = True
+    else:
+      self.close()
    
   def _add_decoder(self, decoder):
     """ Used internally to add decoders so they receive data from the input driver. """

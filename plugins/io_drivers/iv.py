@@ -35,7 +35,7 @@ class IvyDriver(IODriver):
   """
       Ivy input driver.
   """
-  
+  _use_thread = False 
   name = Str('Ivy Driver')
   view = View(
 #    Item(name='foo', label='Foo'),
