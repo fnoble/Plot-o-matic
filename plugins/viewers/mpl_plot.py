@@ -121,14 +121,15 @@ class MPLPlot(Viewer):
           first = int(self.x_min)
         if not self.x_max_auto:
           last = int(self.x_max) + 1
-        data = self.variables.new_expression(expr).get_array(first, last)
-  
-        xs = [0]
-        ys = [0]
-        for point_no, y in enumerate(data):
-          xs += [point_no]
-          ys += [y]
-      
+
+        ys = self.variables.new_expression(expr).get_array(first, last)
+        
+        if len(ys) != 0:
+          xs = self.variables.new_expression('sample_num').get_array(first, last)
+        else:
+          xs = [0]
+          ys = [0]
+
         lines[n].set_xdata(xs)
         lines[n].set_ydata(ys)
     
@@ -150,10 +151,8 @@ class MPLPlot(Viewer):
       if self.y_min_auto:
         self.y_min = min_ys
   
-      if self.x_min_auto or self.x_max_auto:
-        axes.set_xbound(upper=self.x_max, lower=self.x_min)
-      if self.y_min_auto or self.y_max_auto:
-        axes.set_ybound(upper=self.y_max*1.1, lower=self.y_min*1.1)
+      axes.set_xbound(upper=self.x_max, lower=self.x_min)
+      axes.set_ybound(upper=self.y_max*1.1, lower=self.y_min*1.1)
       
       self.draw_plot()
 
