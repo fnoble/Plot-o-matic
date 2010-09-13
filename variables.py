@@ -104,6 +104,18 @@ class Variables(HasTraits):
       data = None
     return data
 
+  def bound_array(self, first, last):
+    if first < 0:
+      first += self.sample_number
+      if first < 0:
+        first = 0
+    if last and last < 0:
+      last += self.sample_number
+    if last == None:
+      last = self.sample_number
+
+    return (first, last)
+
   def _get_array(self, expr, first=0, last=None):
     """
         Returns an array of tuples containing the all the values of an
@@ -112,22 +124,16 @@ class Variables(HasTraits):
         directly as it has caching etc.
     """
     data_array = []
-    if first < 0:
-      first = self.sample_number + first
-      if first < 0:
-        first = 0
-    if last and last < 0:
-      last = self.sample_number - last
-    if last == None:
-      last = self.sample_number
+    first, last = self.bound_array(first, last)
 
-    #data = [self._eval_expr(expr, vs) for vs in self.vars_list[first:last]]
-    #data = [d for d in data if d is not None]
-
-    try:
-      data = [eval(expr, expression_context, vs) for vs in self.vars_list[first:last]]
-    except Exception as e:
-      data = []
+    data = [self._eval_expr(expr, vs) for vs in self.vars_list[first:last]]
+    data = [d for d in data if d is not None]
+    
+    #try:
+    #  data = [try: eval(expr, expression_context, vs); except: pass; for vs in self.vars_list[first:last]]
+    #except Exception as e:
+    #  print e
+    #  data = []
 
     data_array = numpy.array(data)
     return data_array
@@ -155,10 +161,11 @@ class Expression(HasTraits):
     return self._vars._eval_expr(self._expr)
 
   def get_array(self, first=0, last=None):
-    if last == None:
-      last = self._vars.sample_number
+    first, last = self._vars.bound_array(first, last)
+    
     if last > self._data_array_cache_index:
       #print "Cache miss of", (last - self._data_array_cache_index)
       self._data_array_cache = numpy.append(self._data_array_cache, self._vars._get_array(self._expr, self._data_array_cache_index, last))
       self._data_array_cache_index = last
+
     return self._data_array_cache[first:last]
