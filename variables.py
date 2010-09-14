@@ -81,8 +81,10 @@ class Variables(HasTraits):
   def clear(self):
     """ Clear all recorded data. """
     self.sample_number = 0
+    self.sample_count = 0
     self.vars_list = []
     self.vars_pool = {}
+    self.vars_table_list = []
 
   def update_vars_table(self):
     vars_list_unsorted = [(name, repr(val)) for (name, val) in list(self.vars_pool.iteritems())]
