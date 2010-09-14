@@ -12,22 +12,17 @@ class JobySimDecoder(DataDecoder):
     title='JobySim decoder'
   )
   sub_re = re.compile('\W+')
+  names = List()
 
   def decode(self, data):
     """
         Decode an input string of the form ~variable_name#value.
     """
+    if data[0] = '#':
+      # list of names
+      names = [self.sub_re.sub('_', name) for name in data[1:].split('!')]
+      print "JobySimDecoder got names:", names
+      return None
 
-    mylist = data[0:].split('!')
-    
-    new_dict = {}
-
-    for item in mylist:
-      var_name, val = item.split('#')
-      var_name = self.sub_re.sub('_', var_name)
-      try:
-        new_dict[var_name] = eval(val)
-      except:
-        new_dict[var_name] = val
-
-    return new_dict
+    vals = map(eval, data.split('!'))
+    return dict(zip(names, vals))
