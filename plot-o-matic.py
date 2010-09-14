@@ -23,9 +23,10 @@ from enthought.traits.ui.api import TreeEditor, TreeNode, View, Item, VSplit, \
 from enthought.traits.ui.menu import Menu, Action, Separator
 
 PROFILE = False
+PROFILE_BUILTINS = True
 if PROFILE:
   import yappi
-  yappi.start()
+  yappi.start(PROFILE_BUILTINS)
 
 
 def find_io_driver_plugins():
@@ -233,11 +234,9 @@ class PlotOMatic(HasTraits):
 vs = Variables()
 viewers = Viewers(variables = vs)
 
-u = UDPDriver()
 viewers._add_viewer(MPLPlot())
-u._add_decoder(JobySimDecoder())
 
-iodl = IODriverList(io_drivers = [u], variables = vs, viewers_instance = viewers)
+iodl = IODriverList(io_drivers = [], variables = vs, viewers_instance = viewers)
 proj = PlotOMatic(io_driver_list = iodl, variables = vs, viewers = viewers)
   
 
