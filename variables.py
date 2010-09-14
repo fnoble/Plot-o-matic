@@ -17,10 +17,13 @@ class Variables(HasTraits):
   vars_list = List()
   vars_table_list = List()  # a list version of vars_pool maintained for the TabularEditor
   vars_table_list_update_time = Float(0)
+
   sample_number = Int(0)
   sample_count = Int(0)
   max_samples = Int(20000)
 
+  start_time = time.time()
+  
   add_var_event = Event()
 
   clear_button = Button('Clear')
@@ -61,7 +64,7 @@ class Variables(HasTraits):
     new_vars_pool = {}
     new_vars_pool.update(self.vars_pool)
     new_vars_pool.update(data_dict)
-    new_vars_pool.update({'sample_num': self.sample_number, 'system_time': time.time()})
+    new_vars_pool.update({'sample_num': self.sample_number, 'system_time': time.time(), 'time': time.time() - self.start_time})
     if '' in new_vars_pool: 
       del new_vars_pool[''] # weed out undesirables
 
@@ -85,6 +88,7 @@ class Variables(HasTraits):
     self.vars_list = []
     self.vars_pool = {}
     self.vars_table_list = []
+    self.start_time = time.time()
 
   def update_vars_table(self):
     vars_list_unsorted = [(name, repr(val)) for (name, val) in list(self.vars_pool.iteritems())]
