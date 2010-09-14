@@ -4,6 +4,7 @@ from enthought.traits.ui.tabular_adapter import TabularAdapter
 import time
 
 import math, numpy
+import cPickle as pickle
 
 expression_context = {}
 expression_context.update(numpy.__dict__)
@@ -68,27 +69,45 @@ class Variables(HasTraits):
     if '' in new_vars_pool: 
       del new_vars_pool[''] # weed out undesirables
 
-    self.vars_pool = new_vars_pool
+    self.vars_list.append(new_vars_pool)
+    self.update_vars_list()
+
+  def update_vars_list(self): 
+    self.vars_pool = self.vars_list[-1]
 
     if time.time() - self.vars_table_list_update_time > 0.2:
       self.vars_table_list_update_time = time.time()
       self.update_vars_table()
 
-    self.vars_list.append(new_vars_pool)
     self.sample_count = len(self.vars_list)
     if self.sample_count > self.max_samples:
       self.vars_list = self.vars_list[-self.max_samples:]
       self.sample_count = self.max_samples
-  
+      
   @on_trait_change('clear_button')
   def clear(self):
     """ Clear all recorded data. """
     self.sample_number = 0
-    self.sample_count = 0
     self.vars_list = []
-    self.vars_pool = {}
-    self.vars_table_list = []
+    self.update_vars_list()
+    self.update_vars_table()
     self.start_time = time.time()
+
+  def save_data_set(self, filename):
+    fp = open(filename, 'wb')
+    pickle.dump(self.vars_list, fp, True)
+    fp.close() 
+
+  def open_data_set(self, filename):
+    fp = open(filename, 'rb')
+    self.vars_list = pickle.load(fp)
+    fp.close() 
+    
+    self.update_vars_list()
+    self.update_vars_table()
+    self.sample_number = self.sample_count
+    # spoof start time so that we start where we left off
+    self.start_time = time.time() - self.vars_list[-1]['time']
 
   def update_vars_table(self):
     vars_list_unsorted = [(name, repr(val)) for (name, val) in list(self.vars_pool.iteritems())]
