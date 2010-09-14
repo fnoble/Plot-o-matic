@@ -26,7 +26,7 @@ class JobySimDecoder(DataDecoder):
       var_name, val = item.split('#')
       var_name = self.sub_re.sub('_', var_name)
       try:
-        new_dict[var_name] = float(val)
+        new_dict[var_name] = eval(val)
       except:
         new_dict[var_name] = val
 
