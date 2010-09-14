@@ -19,8 +19,12 @@ from plugins.viewers_all import *
 
 from enthought.traits.api import HasTraits, Str, Regex, List, Instance, DelegatesTo
 from enthought.traits.ui.api import TreeEditor, TreeNode, View, Item, VSplit, \
-  HGroup, Handler, Group, Include, ValueEditor, HSplit, ListEditor, InstanceEditor
-from enthought.traits.ui.menu import Menu, Action, Separator
+  HGroup, Controller, Handler, Group, Include, ValueEditor, HSplit, ListEditor, InstanceEditor
+from enthought.traits.ui.menu import Menu, Action, Separator, MenuBar
+from enthought.traits.ui.file_dialog import open_file, save_file
+
+#import cPickle as pickle
+import pickle
 
 PROFILE = False
 PROFILE_BUILTINS = True
@@ -46,7 +50,60 @@ def get_viewer_plugin_by_name(name):
 
 
 
-class TreeHandler(Handler):
+class PlotOMaticHandler(Controller):
+  # ------------ Menu related --------------------
+  exit_action = Action(name='&Exit', action='exit')
+  save_session_action = Action(name='&Open Session', action='open_session')
+  open_session_action = Action(name='&Save Session', action='save_session')
+
+  file_menu = Menu(
+      exit_action,
+      Separator(),
+      save_session_action,
+      open_session_action,
+      name = '&File'
+  )
+
+  def exit(self, uii):
+    print 'Exit called, really should implement this'
+
+  def save_session(self, uii):
+    print 'save'
+    print pickle.dumps(uii.object.viewers)
+
+  def open_session(self, uii):
+    print 'open'
+  
+  clear_data_action = Action(name = '&Clear Data', action='clear_data')
+  save_data_action = Action(name = '&Save Data Set', action='save_data')
+  open_data_action = Action(name = '&Open Data Set', action='open_data')
+
+  data_menu = Menu(
+      clear_data_action,
+      Separator(),
+      save_data_action,
+      open_data_action,
+      name = '&Data'
+  )
+
+  def clear_data(self, uii):
+    uii.object.variables.clear()
+
+  def save_data(self, uii):
+    filename = save_file()
+    if filename != '':
+      uii.object.variables.save_data_set(filename)
+      print "Saved data set as", filename
+
+  def open_data(self, uii):
+    filename = open_file()
+    if filename != '':
+      uii.object.variables.open_data_set(filename)
+      print "Opened data set ", filename
+
+
+  # ------------ Tree related --------------------
+
   remove_io_driver_action = Action(name='Remove', action='handler.remove_io_driver(editor,object)')
   add_io_driver_actions_menu = Instance(Menu)
 
@@ -113,7 +170,6 @@ class TreeHandler(Handler):
     new_viewer = get_viewer_plugin_by_name(viewer_name)()
     object.viewers_instance._add_viewer(new_viewer)
     editor.update_editor()
-    
 
 
 class PlotOMatic(HasTraits):
@@ -122,17 +178,17 @@ class PlotOMatic(HasTraits):
   viewers = Instance(Viewers)
   selected_viewer = Instance(Viewer)
   
-  tree_handler = TreeHandler()
+  handler = PlotOMaticHandler()
 
   viewer_node = TreeNode( 
     node_for  = [Viewer],
     auto_open = True,
     label     = 'name',
-    menu      = Menu( tree_handler.remove_viewer_action ),
+    menu      = Menu( handler.remove_viewer_action ),
     icon_path = 'icons/',
     icon_item = 'plot.png'
   )
- 
+
   tree_editor = TreeEditor(
     nodes = [
       TreeNode( 
@@ -140,7 +196,7 @@ class PlotOMatic(HasTraits):
         auto_open = True,
         children  = 'io_drivers',
         label     = '=Input Drivers',
-        menu      = Menu( tree_handler.add_io_driver_actions_menu ),
+        menu      = Menu( handler.add_io_driver_actions_menu ),
         view      = View(),
       ),
       TreeNode( 
@@ -150,8 +206,8 @@ class PlotOMatic(HasTraits):
         label     = 'name',
         add       = [DataDecoder],
         menu      = Menu(
-          tree_handler.remove_io_driver_action,
-          tree_handler.add_decoder_actions_menu
+          handler.remove_io_driver_action,
+          handler.add_decoder_actions_menu
         ),
         icon_path = 'icons/',
         icon_open = 'input.png',
@@ -162,7 +218,7 @@ class PlotOMatic(HasTraits):
         auto_open = True,
         children  = '',
         label     = 'name',
-        menu      = Menu( tree_handler.remove_decoder_action ),
+        menu      = Menu( handler.remove_decoder_action ),
         icon_path = 'icons/',
         icon_item = 'decoder.png'
       ),
@@ -171,7 +227,7 @@ class PlotOMatic(HasTraits):
         auto_open = True,
         children  = 'viewers',
         label     = '=Viewers',
-        menu      = Menu( tree_handler.add_viewer_actions_menu ),
+        menu      = Menu( handler.add_viewer_actions_menu ),
         view      = View()
       ),
       viewer_node
@@ -207,11 +263,15 @@ class PlotOMatic(HasTraits):
         )
       )
     ),
+    menubar = MenuBar(
+      handler.file_menu,
+      handler.data_menu
+    ),
     title = 'Plot-o-matic',
     resizable = True,
     width = 1000,
     height = 600,
-    handler = tree_handler
+    handler = PlotOMaticHandler()
   )
   
   def __init__(self, **kwargs):
