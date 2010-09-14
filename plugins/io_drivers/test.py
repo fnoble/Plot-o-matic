@@ -1,5 +1,5 @@
 from io_driver import IODriver
-from enthought.traits.api import Str, Float
+from enthought.traits.api import Str, Range
 from enthought.traits.ui.api import View, Item
 import time
 
@@ -15,8 +15,10 @@ class TestDriver(IODriver):
   )
   
   data = Str('Data,2,4,6,7.8')
-  period_ms = Float(1000.0)
+  period_ms = Range(10, 10000, 200)
   
-  def receive(self):    
+  def receive(self):
     time.sleep(self.period_ms / 1000.0)
     return self.data
+
+
