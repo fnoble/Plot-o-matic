@@ -19,6 +19,8 @@ Plot-o-matic requires the following python modules to be installed:
 * TraitsGUI
 * TraitsBackendWX (untested with the Qt backend)
 * Chaco
+* Mayavi
+* Python VTK
 
 You will probably also need the following packages:
 
@@ -31,11 +33,11 @@ Ubuntu
 
 Install the common libraries through apt:
 
-`sudo apt-get install python-dev python-setuptools python-setupdocs python-wxgtk2.8 python-numpy swig`
+`sudo apt-get install python-dev python-setuptools python-setupdocs python-wxgtk2.8 python-numpy swig python-vtk`
 
 Get Traits etc. through easy_install because the versions in Ubuntu's repos are quite old:
 
-`sudo easy_install Traits TraitsGUI TraitsBackendWX Chaco`
+`sudo easy_install Traits TraitsGUI TraitsBackendWX Chaco Mayavi`
 
 Running
 =======
