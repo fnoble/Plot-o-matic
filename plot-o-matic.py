@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+import psyco
+psyco.full()
+
 # If wxversion is installed, make sure we are
 # using wx >= 2.8
 try:
