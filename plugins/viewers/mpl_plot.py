@@ -130,6 +130,10 @@ class MPLPlot(Viewer):
           xs = [0]
           ys = [0]
 
+        if len(xs) != len(ys):
+          print "MPL Plot: x and y arrays different sizes!!! Ignoring (but fix me soon)."
+          return
+
         lines[n].set_xdata(xs)
         lines[n].set_ydata(ys)
     
