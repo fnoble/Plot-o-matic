@@ -178,9 +178,12 @@ class Expression(HasTraits):
 
   def set_expr(self, expr):
     if self._expr != expr:
-      self._data_array_cache = numpy.array([])
-      self._data_array_cache_index = 0
       self._expr = expr
+
+  def __expr_changed(self):
+    print "expr changed"
+    self._data_array_cache = numpy.array([])
+    self._data_array_cache_index = 0
 
   def get_curr_value(self):
     return self._vars._eval_expr(self._expr)
