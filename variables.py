@@ -148,10 +148,12 @@ class Variables(HasTraits):
         these values. Used internally by Expression, users should use Expression
         directly as it has caching etc.
     """
-    data_array = []
-    first, last = self.bound_array(first, last)
 
-    data = [self._eval_expr(expr, vs) for vs in self.vars_list[first:last]]
+    first, last = self.bound_array(first, last)
+    if expr in self.vars_pool:
+      data = [vs.get(expr) for vs in self.vars_list[first:last]]
+    else:
+      data = [self._eval_expr(expr, vs) for vs in self.vars_list[first:last]]
     data = [d for d in data if d is not None]
     
     #try:
