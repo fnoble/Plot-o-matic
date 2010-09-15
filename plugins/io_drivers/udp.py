@@ -23,7 +23,7 @@ class UDPDriver(IODriver):
   
   sock = socket.socket()
 
-  port = Int(4243)
+  port = Int(5000)
   ip = Str('0.0.0.0')
   filter_by_addr = Bool(False)
   filter_addr = Str('')
@@ -43,7 +43,7 @@ class UDPDriver(IODriver):
   def receive(self):
     try:
       (data, (addr, port)) = self.sock.recvfrom(102400) # buffer size is 10kb
-      print "UDP driver: packet from '%s' size %u bytes" % (addr, len(data))
+      #print "UDP driver: packet from '%s' size %u bytes" % (addr, len(data))
       if self.filter_by_addr and addr != self.filter_addr:
         return None
     except socket.timeout:
