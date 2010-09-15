@@ -88,7 +88,7 @@ class Variables(HasTraits):
   def clear(self):
     """ Clear all recorded data. """
     self.sample_number = 0
-    self.vars_list = []
+    self.vars_list = [{}]
     self.update_vars_list()
     self.update_vars_table()
     self.start_time = time.time()
