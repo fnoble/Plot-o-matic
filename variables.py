@@ -27,6 +27,8 @@ class Variables(HasTraits):
   
   add_var_event = Event()
 
+  expressions = List(Instance(Expression))
+
   clear_button = Button('Clear')
   view = View(
            HSplit(
@@ -51,7 +53,9 @@ class Variables(HasTraits):
          )
   
   def new_expression(self, expr):
-    return Expression(self, expr)
+    new_expression = Expression(self, expr)
+    self.expressions.append(new_expression)
+    return new_expression
     
   def update_variables(self, data_dict):
     """
@@ -92,6 +96,9 @@ class Variables(HasTraits):
     self.update_vars_list()
     self.update_vars_table()
     self.start_time = time.time()
+
+    for expression in self.expressions
+      expression.clear_cache()
 
   def save_data_set(self, filename):
     fp = open(filename, 'wb')
@@ -183,6 +190,9 @@ class Expression(HasTraits):
       self._expr = expr
 
   def __expr_changed(self):
+    self.clear_cache()
+
+  def clear_cache(self):
     self._data_array_cache = numpy.array([])
     self._data_array_cache_index = 0
 
