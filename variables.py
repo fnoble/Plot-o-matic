@@ -181,7 +181,6 @@ class Expression(HasTraits):
       self._expr = expr
 
   def __expr_changed(self):
-    print "expr changed"
     self._data_array_cache = numpy.array([])
     self._data_array_cache_index = 0
 
