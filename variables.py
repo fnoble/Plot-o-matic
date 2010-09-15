@@ -10,6 +10,9 @@ expression_context = {}
 expression_context.update(numpy.__dict__)
 
 
+def update_context(context):
+  expression_context.update(context)
+
 class VariableTableAdapter(TabularAdapter):
   columns = [('Variable name', 0), ('Value', 1)]
 
