@@ -27,7 +27,7 @@ class Variables(HasTraits):
   
   add_var_event = Event()
 
-  expressions = List(Instance(Expression))
+  expressions = List()
 
   clear_button = Button('Clear')
   view = View(
@@ -97,7 +97,7 @@ class Variables(HasTraits):
     self.update_vars_table()
     self.start_time = time.time()
 
-    for expression in self.expressions
+    for expression in self.expressions:
       expression.clear_cache()
 
   def save_data_set(self, filename):
