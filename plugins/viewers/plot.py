@@ -94,7 +94,6 @@ class Plot(Viewer):
 
   @on_trait_change('name')
   def update_name(self, new_name):
-    return
     self.plot.title = new_name
     self.plot.request_redraw()
 
