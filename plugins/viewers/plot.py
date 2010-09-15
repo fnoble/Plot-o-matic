@@ -1,5 +1,5 @@
-from enthought.traits.api import Str, Range, HasTraits, Instance, Dict, Float, Bool, on_trait_change, List
-from enthought.traits.ui.api import Item, View, HGroup, VGroup, TextEditor
+from enthought.traits.api import Str, Range, HasTraits, Instance, Dict, Float, Bool, on_trait_change, List, DelegatesTo
+from enthought.traits.ui.api import Item, View, HGroup, VGroup, TextEditor, InstanceEditor, ListEditor
 
 import enthought.chaco.api as chaco
 from enthought.enable.component_editor import ComponentEditor
@@ -28,6 +28,7 @@ class Plot(Viewer):
 
   plot = Instance(chaco.Plot)
   plot_data = Instance(chaco.ArrayPlotData)
+  index_range = DelegatesTo('plot')
   
   y_exprs = List(Instance(Expression))
   x_expr = Instance(Expression)
@@ -55,6 +56,7 @@ class Plot(Viewer):
     Item(name = 'legend', label = 'Show legend'),
     VGroup(
       Item(name = 'x_expr', label = 'Expression', style = 'custom'),
+      Item(name = 'index_range', label = 'Foo', editor = InstanceEditor()),
       HGroup(
         Item(name = 'x_max', label = 'Max'),
         Item(name = 'x_max_auto', label = 'Auto')
@@ -70,8 +72,8 @@ class Plot(Viewer):
       Item(name = 'x_label', label = 'Label'),
       label = 'X', show_border = True
     ),
+    Item(name = 'y_exprs', label = 'Expression(s)', style = 'custom', editor=ListEditor(style = 'custom')),
     VGroup(
-      Item(name = 'y_exprs', label = 'Expression(s)', style = 'custom'),
       HGroup(
         Item(name = 'y_max', label = 'Max'),
         Item(name = 'y_max_auto', label = 'Auto')
@@ -88,7 +90,11 @@ class Plot(Viewer):
   )
   
   view = View(
-    Item('plot', editor=ComponentEditor(), show_label=False),
+    Item(
+      'plot',
+      editor = ComponentEditor(bgcolor = (0.8,0.8,0.8)),
+      show_label = False,
+    ),
     resizable = True
   )
 
@@ -120,24 +126,59 @@ class Plot(Viewer):
     self.x_expr = self.variables.new_expression('i')
     self.y_exprs = [self.variables.new_expression('0.5')]
     ys = self.y_exprs[0].get_array()
-    self.plot_data.set_data('y', ys)
+    self.plot_data.set_data('0', ys)
     self.plot_data.set_data('x', range(len(ys)))
-    self.plot.plot(('x', 'y'), name = 'y', style='line', color='auto')
+    self.plot.plot(('x', '0'), name = 'y', style='line', color='auto')
 
   @on_trait_change('y_exprs')
   def update_y_exprs(self):
+    for n, expr in enumerate(self.y_exprs):
+      if expr is None:
+        # Initialise a new expression if we added one
+        self.y_exprs[n] = self.variables.new_expression('0.5')
+        ys = self.y_exprs[n].get_array()
+        self.plot_data.set_data(str(n), ys)
+        self.plot.plot(('x', str(n)), name = 'y', style='line', color='auto')
+
     self.update()
 
   @on_trait_change('x_expr')
   def update_x_expr(self):
     self.update()
 
+  def get_x_bounds(self, x_low, x_high, margin, tight_bounds):
+    if self.scroll:
+      x_max = max(xs)
+      x_min = x_max = self.scroll_width
+      if x_min < 0:
+        x_min = 0
+    else:
+      x_max = self.x_max
+      x_min = self.x_min
+      if self.x_max_auto:
+        x_max = max(xs)
+      if self.x_min_auto:
+        x_min = min(xs)
+    return (x_min, x_max)
+
+  def get_y_bounds(self, y_low, y_high, margin, tight_bounds):
+    y_max = self.y_max
+    y_min = self.y_min
+    if self.y_max_auto:
+      y_max = max(ys)
+    if self.y_min_auto:
+      y_min = min(ys)
+    return (y_min, y_max)
+
   def update(self):
-    if len(self.y_exprs) >= 1:
-      ys = self.y_exprs[0].get_array()
+    for n, expr in enumerate(self.y_exprs):
+      ys = self.y_exprs[n].get_array()
       xs = range(len(ys))
-      self.plot_data.set_data('y', ys)
+      self.plot_data.set_data(str(n), ys)
       self.plot_data.set_data('x', xs)
-      self.plot.request_redraw()
+
+      #self.plot.value_range = self.get_y_bounds(ys)
+      #self.plot.index_range = self.get_x_bounds(xs)
+    self.plot.request_redraw()
 
 
