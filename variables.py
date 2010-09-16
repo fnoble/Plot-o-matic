@@ -190,7 +190,7 @@ class ExpressionString(BaseStr):
 class Expression(HasTraits):
   _vars = Instance(Variables)
   _expr = ExpressionString('')
-  _data_array_cache = numpy.array([])
+  _data_array_cache = None
   _data_array_cache_index = Int(0)
 
   view = View(Item('_expr', show_label = False, editor=TextEditor(enter_set=True, auto_set=False)))
@@ -208,7 +208,7 @@ class Expression(HasTraits):
     self.clear_cache()
 
   def clear_cache(self):
-    self._data_array_cache = numpy.array([])
+    self._data_array_cache = None
     self._data_array_cache_index = 0
 
   def get_curr_value(self):
@@ -216,10 +216,19 @@ class Expression(HasTraits):
 
   def get_array(self, first=0, last=None):
     first, last = self._vars.bound_array(first, last)
-    
     if last > self._data_array_cache_index:
       #print "Cache miss of", (last - self._data_array_cache_index)
-      self._data_array_cache = numpy.append(self._data_array_cache, self._vars._get_array(self._expr, self._data_array_cache_index, last))
+      new_data = self._vars._get_array(self._expr, self._data_array_cache_index, last)
+
+      new_shape = list(new_data.shape)
+      new_shape[0] = -1 # -1 lets the first index resize appropriately for the data length
+      
+      if self._data_array_cache is None:
+        self._data_array_cache = new_data
+      else:
+        self._data_array_cache = numpy.append(self._data_array_cache, new_data)
+      
+      self._data_array_cache.shape = new_shape
       self._data_array_cache_index = last
 
     return self._data_array_cache[first:last]
