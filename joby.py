@@ -14,7 +14,6 @@ from viewers import Viewer, Viewers
 from variables import Variables
 
 
-
 from plugins.io_drivers_all import *
 from plugins.decoders_all import *
 from plugins.viewers_all import *
@@ -296,7 +295,10 @@ class PlotOMatic(HasTraits):
 vs = Variables()
 viewers = Viewers(variables = vs)
 
-viewers._add_viewer(TVTKViewer())
+from plotconfig import TVTKconfig
+config=TVTKconfig(vs)
+
+viewers._add_viewer(TVTKViewer(config))
 
 iodl = IODriverList(io_drivers = [], variables = vs, viewers_instance = viewers)
 proj = PlotOMatic(io_driver_list = iodl, variables = vs, viewers = viewers)
