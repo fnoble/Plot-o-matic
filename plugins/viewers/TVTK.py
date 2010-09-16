@@ -36,18 +36,12 @@ class TVTKViewer(Viewer):
     title = 'Viewer'
   )
 
+  def __init__(self,config=None):
+    Viewer.__init__(self)
+    self.config=config
+
   def start(self):
-    #self.a = actors.cone_actor()
-    w=WorldFrame()
-    f1=Frame(w,self.variables.new_expression('TRy(time/10.0)*tr(1,0,0)'),name="F1")
-    f2=Frame(f1,self.variables.new_expression('TRz(time/10.0)*tr(1,0,0)'),name="F2")
-    f3=Frame(f2,self.variables.new_expression('TRx(time/10.0)*tr(1,0,0)'),name="F3")
-    f4=Frame(f3,self.variables.new_expression('TRy(time/10.0)*tr(1,0,0)'),name="F4")
-    f5=Frame(f4,self.variables.new_expression('TRx(time/10.0)*tr(1,0,0)'),name="F5")
-    f6=Frame(f5,self.variables.new_expression('TRx(time/10.0)*tr(1,0,0)'),name="F6")
-    f7=Frame(f6,self.variables.new_expression('TRz(time/10.0)*tr(1,0,0)'),name="F7")
-    f8=Frame(f7,self.variables.new_expression('TRy(time/10.0)*tr(1,0,0)'),name="F8")
-    self.primitives=[Axes(w),Box(f1),Cone(f2),Arrow(f3),Sphere(f4),Cylinder(f5),Image(f6),Line(f7),Plane(f8)]
+    self.primitives=self.config.getPrimitives()
     for prim in self.primitives:
     	self.scene.add_actors(prim.actor)
     pass
@@ -62,7 +56,6 @@ class TVTKViewer(Viewer):
     pass
 
   def update(self):
-    print 123546
     for prim in self.primitives:
       prim.update()
     GUI.invoke_later(self.scene.render)
