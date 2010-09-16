@@ -5,9 +5,11 @@ from enthought.traits.ui.api import TreeEditor, TreeNode, View, Item, VSplit, \
 from enthought.tvtk.api import tvtk
 from plugins.viewers.tools3D.Frame import *
 
-from numpy import array
+import numpy
+from numpy import array, ndarray, linspace, zeros
 # actor inherits from Prop3D
 
+import numpy as np
 
 
 #note: to change color, pull slider all the way accross the range
@@ -28,26 +30,25 @@ class Primitive(HasTraits):
     for a in args:
       if isinstance(a,Frame):
         self.parent=a
-    print self.all_trait_names()
     for k,v in kwargs.items():
       if k == 'frame':
         self.parent=v
       elif k == 'T':
-         self.T=T
+         if isinstance(v,Expression):
+           self.T=v
+         else:
+           self.T=self.parent.variables.new_expression(v)
       elif len(self.trait_get(k))>0:
-         print "self:", k,v
          #self.trait_set({k:v})
          self.__setattr__(k,v)
       elif len(self.actor.trait_get(k))>0:
-         print "actor:", k,v
          self.actor.__setattr__(k,v)
       elif len(self.properties.trait_get(k))>0:
-         print "properties:", k,v
          self.properties.__setattr__(k,v)
+      elif len(self.source.trait_get(k))>0:
+         self.source.__setattr__(k,v)
       else :
          print "unknown argument", k , v
-         #print self.properties.__dict__
-         #print self.actor.__dict__
 
     if not(self.parent):
       self.parent = WorldFrame()
@@ -206,6 +207,7 @@ class Plane(Primitive):
     Item(name = 'parent', label='Frame'),
     Item(name = 'T', label = 'Matrix4x4', style = 'custom'),
     Item(name = 'properties', editor=InstanceEditor(), label = 'Render properties'),
+    Item(name = 'source', editor=InstanceEditor(), label = 'Geometric properties'),
     title = 'Plane properties'
    )
    def __init__(self,*args,**kwargs):
@@ -229,6 +231,98 @@ class Line(Primitive):
     self.mapper = tvtk.PolyDataMapper(input=self.source.output)
     self.actor = tvtk.Actor(mapper=self.mapper)
     self.handle_arguments(*args,**kwargs)
+    
+# The following code is mainly from 
+# http://www.enthought.com/~rkern/cgi-bin/hgwebdir.cgi/colormap_explorer/file/a8aef0e90790/colormap_explorer/colormaps.py
+class PolyLine(Primitive):
+   source=Instance(tvtk.PolyData)
+   points=Instance(numpy.ndarray)
+   traits_view = View(
+    Item(name = 'parent', label='Frame'),
+    Item(name = 'T', label = 'Matrix4x4', style = 'custom'),
+    Item(name = 'properties', editor=InstanceEditor(), label = 'Render properties'),
+    title = 'Line properties'
+   )
+   def __init__(self,*args,**kwargs):
+    Primitive.__init__(self,**kwargs)
+    self.source = tvtk.PolyData()
+    self.mapper = tvtk.PolyDataMapper(input=self.source)
+    self.actor = tvtk.Actor(mapper=self.mapper)
+    self.handle_arguments(*args,**kwargs)
+    #kwargs.get('foo', 12)  fnoble cleverity
+
+   def _points_changed(self,old, new):
+    npoints = len(self.points)
+    if npoints<2 :
+      return
+    lines = np.zeros((npoints-1, 2), dtype=int)
+    lines[:,0] = np.arange(0, npoints-1)
+    lines[:,1] = np.arange(1, npoints)
+    self.source.points=self.points
+    self.source.lines=lines
+
+class Circle(PolyLine):
+   radius=Instance(Expression)
+   resolution=Int(100)
+   traits_view = View(
+    Item(name = 'parent', label='Frame'),
+    Item(name = 'T', label = 'Matrix4x4', style = 'custom'),
+    Item(name = 'radius', style = 'custom'),
+    Item(name = 'resolution'),
+    Item(name = 'properties', editor=InstanceEditor(), label = 'Render properties'),
+    title = 'Line properties'
+   )
+   def __init__(self,*args,**kwargs):
+     PolyLine.__init__(self,*args,**kwargs)
+     
+   def update(self):
+     t=linspace(0,6.29,self.resolution)
+     if self.radius.get_curr_value() !=None :
+     	self.points = array([self.radius.get_curr_value()*sin(t),self.radius.get_curr_value()*cos(t),zeros(t.shape)]).T
+     	super(Circle, self).update()
+    
+class Trace(PolyLine):
+   x  = Instance(Expression)
+   y  = Instance(Expression)
+   z  = Instance(Expression)
+   length = Int(0)
+   
+   traits_view = View(
+    Item(name = 'length', label='Frame'),
+    Item(name = 'x', style = 'custom'),
+    Item(name = 'y', style = 'custom'),
+    Item(name = 'z', style = 'custom'),
+    Item(name = 'properties', editor=InstanceEditor(), label = 'Render properties'),
+    title = 'Line properties'
+   )
+   def __init__(self,*args,**kwargs):
+     PolyLine.__init__(self,*args,**kwargs)
+     
+   def update(self):
+     x=self.x.get_array(first=-self.length)
+     y=self.y.get_array(first=-self.length)
+     z=self.z.get_array(first=-self.length)
+     #self.points = array([x,y,z]).T
+     #print self.point.get_array(first=-self.length).shape
+     super(Trace, self).update()
+     
+
+class Text(Primitive):
+  text=DelegatesTo('source')
+  traits_view = View(
+    Item(name = 'parent', label='Frame'),
+    Item(name = 'T', label = 'Matrix4x4', style = 'custom'),
+    Item(name = 'text'),
+    Item(name = 'properties', editor=InstanceEditor(), label = 'Render properties'),
+    title = 'Text properties'
+   )
+  def __init__(self,*args,**kwargs):
+    Primitive.__init__(self,**kwargs)
+    self.source = tvtk.VectorText()
+    self.mapper = tvtk.PolyDataMapper(input=self.source.get_output())
+    self.actor = tvtk.Actor(mapper=self.mapper)
+    self.handle_arguments(*args,**kwargs)
+    #kwargs.get('foo', 12)  fnoble cleverity
 
 class Image(Primitive):
     source=Instance(tvtk.ImageReader)
@@ -251,8 +345,35 @@ class Image(Primitive):
         self.actor=tvtk.ImageActor(input=self.source.output)
         self.handle_arguments(*args,**kwargs)
     
+    
+    
 #http://mayavi2.sourcearchive.com/documentation/3.3.0-2/actors_8py-source.html
 #source = tvtk.ArrowSource(tip_resolution=resolution,
 #                              shaft_resolution=resolution)
 
 # LineSource, PlaneSource
+
+class PrimitiveCollection(HasTraits):
+  primitives=List(Primitive)
+  T=Instance(Expression)
+  frame=Instance(Frame)
+  
+  def getPrimitives(self):
+    return self.primitives
+    
+  def __init__(self,frame,T=None):
+    if T is None:
+      self.frame=frame
+    else :
+      self.frame=Frame(frame,T)
+      
+  def add(self, arg):
+    if isinstance(arg,list):
+      map(self.add,arg)
+    if isinstance(arg,Primitive):
+      self.primitives.append(arg)
+    if isinstance(arg,PrimitiveCollection):
+      self.add(arg.getPrimitives()) 
+      
+      
+

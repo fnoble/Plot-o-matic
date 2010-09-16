@@ -23,7 +23,7 @@ class Frame(HasTraits):
   )
 
   def evalT(self):
-    if self.T.get_curr_value()!=None:
+    if self.T.get_curr_value()!=None and self.parent.evalT()!=None:
       return self.parent.evalT()*self.T.get_curr_value()
     else:
       return None
@@ -74,7 +74,15 @@ class FrameHelperFunctions:
   def origin() :
     return tr(0,0,0)
     
+  def sc(s) :
+    return matrix([[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1.0/s]])
 
+  def quat(a,b,c,d):
+    return matrix([[	a*a+b*b-c*c-d*d,	2*b*c-2*a*d,	2*b*d+2*a*c,	0],
+		[	2*b*c+2*a*d,		a*a-b*b+c*c-d*d,2*c*d-2*a*b,	0],
+		[	2*b*d-2*a*c,		2*c*d+2*a*b,	a*a-b*b-c*c+d*d,0],
+		[	0,			0,		0,		1]])
+    
 from variables import update_context
 
 update_context(FrameHelperFunctions.__dict__)
