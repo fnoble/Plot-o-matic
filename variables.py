@@ -185,7 +185,8 @@ class ExpressionString(BaseStr):
     is_ok, self.info_text = object._vars.test_expr(value)
     if is_ok:
       return value
-    self.error(object, name, value) 
+    #self.error(object, name, value) 
+    return value
 
 class Expression(HasTraits):
   _vars = Instance(Variables)
