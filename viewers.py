@@ -37,6 +37,9 @@ class Viewer(HasTraits):
   def update(self):
     pass
 
+  def add_expr(self, expr):
+    pass
+
 
 class Viewers(HasTraits, t.Thread):
   viewers = List(Viewer)
