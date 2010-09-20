@@ -27,8 +27,7 @@ class Plot(Viewer):
   name = Str('Plot')
 
   plot = Instance(chaco.Plot)
-  plot_data = Instance(chaco.ArrayPlotData)
-  index_range = DelegatesTo('plot')
+  plot_data = Instance(chaco.ArrayPlotData, ())
   
   y_exprs = List(Instance(Expression))
   x_expr = Instance(Expression)
@@ -56,7 +55,6 @@ class Plot(Viewer):
     Item(name = 'legend', label = 'Show legend'),
     VGroup(
       Item(name = 'x_expr', label = 'Expression', style = 'custom'),
-      Item(name = 'index_range', label = 'Foo', editor = InstanceEditor()),
       HGroup(
         Item(name = 'x_max', label = 'Max'),
         Item(name = 'x_max_auto', label = 'Auto')
@@ -72,8 +70,8 @@ class Plot(Viewer):
       Item(name = 'x_label', label = 'Label'),
       label = 'X', show_border = True
     ),
-    Item(name = 'y_exprs', label = 'Expression(s)', style = 'custom', editor=ListEditor(style = 'custom')),
     VGroup(
+      Item(name = 'y_exprs', label = 'Expression(s)', style = 'custom', editor=ListEditor(style = 'custom')),
       HGroup(
         Item(name = 'y_max', label = 'Max'),
         Item(name = 'y_max_auto', label = 'Auto')
@@ -100,47 +98,47 @@ class Plot(Viewer):
 
   @on_trait_change('name')
   def update_name(self, new_name):
-    self.plot.title = new_name
-    self.plot.request_redraw()
+    if self.plot:
+      self.plot.title = new_name
+      self.plot.request_redraw()
 
   @on_trait_change('x_label')
   def update_x_label(self, new_name):
-    return
-    self.plot.index_axis.title = new_name
-    self.plot.request_redraw()
+    if self.plot:
+      self.plot.index_axis.title = new_name
+      self.plot.request_redraw()
     
   @on_trait_change('y_label')
   def update_y_label(self, new_name):
-    return
-    self.plot.value_axis.title = new_name
-    self.plot.request_redraw()
+    if self.plot:
+      self.plot.value_axis.title = new_name
+      self.plot.request_redraw()
 
   def start(self):
-    self.plot_data = chaco.ArrayPlotData()
     self.plot = chaco.Plot(self.plot_data, title=self.name, auto_colors=colours_list)
     self.plot.value_range.tight_bounds = False
     #legend = chaco.Legend(component=self.plot, padding=10, align="ul")
     #legend.tools.append(LegendTool(legend, drag_button="right"))
     #self.plot.overlays.append(legend)
-    #self.update_expr()
-    self.x_expr = self.variables.new_expression('i')
-    self.y_exprs = [self.variables.new_expression('0.5')]
-    ys = self.y_exprs[0].get_array()
-    self.plot_data.set_data('0', ys)
-    self.plot_data.set_data('x', range(len(ys)))
-    self.plot.plot(('x', '0'), name = 'y', style='line', color='auto')
+    #self.y_exprs += [self.variables.new_expression('a')]
+    #self.x_expr = self.variables.new_expression('i')
+    self.update_y_exprs()
 
   @on_trait_change('y_exprs')
   def update_y_exprs(self):
-    for n, expr in enumerate(self.y_exprs):
-      if expr is None:
-        # Initialise a new expression if we added one
-        self.y_exprs[n] = self.variables.new_expression('0.5')
+    if self.plot:
+      if self.plot.plots:
+        for plot in list(self.plot.plots.iterkeys()):
+          self.plot.delplot(plot)
+      for n, expr in enumerate(self.y_exprs):
+        if expr is None:
+          # Initialise a new expression if we added one
+          self.y_exprs[n] = self.variables.new_expression('0.5')
         ys = self.y_exprs[n].get_array()
         self.plot_data.set_data(str(n), ys)
-        self.plot.plot(('x', str(n)), name = 'y', style='line', color='auto')
-
-    self.update()
+        self.plot_data.set_data('x', range(len(ys)))
+        self.plot.plot(('x', str(n)), name = str(n), style='line', color='auto')
+      self.update()
 
   @on_trait_change('x_expr')
   def update_x_expr(self):
@@ -171,14 +169,12 @@ class Plot(Viewer):
     return (y_min, y_max)
 
   def update(self):
-    for n, expr in enumerate(self.y_exprs):
-      ys = self.y_exprs[n].get_array()
-      xs = range(len(ys))
-      self.plot_data.set_data(str(n), ys)
-      self.plot_data.set_data('x', xs)
-
-      #self.plot.value_range = self.get_y_bounds(ys)
-      #self.plot.index_range = self.get_x_bounds(xs)
-    self.plot.request_redraw()
+    if self.plot:
+      for n, expr in enumerate(self.y_exprs):
+        ys = self.y_exprs[n].get_array()
+        xs = range(len(ys))
+        self.plot_data.set_data(str(n), ys)
+        self.plot_data.set_data('x', xs)
+      self.plot.request_redraw()
 
 
