@@ -58,7 +58,10 @@ class Viewers(HasTraits, t.Thread):
     """ Thread to update viewers. """
     while not self._wants_to_terminate:
       if self.selected_viewer:
-        self.selected_viewer.update()
+        try:
+          self.selected_viewer.update()
+        except Exception as e:
+          print "Exception in viewer '%s':" % self.selected_viewer.name, e
         time.sleep(1.0/self.selected_viewer.refresh_rate)
       else:
         time.sleep(0.5)
