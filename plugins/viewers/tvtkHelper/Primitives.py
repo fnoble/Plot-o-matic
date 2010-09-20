@@ -282,16 +282,18 @@ class Circle(PolyLine):
      	super(Circle, self).update()
     
 class Trace(PolyLine):
-   x  = Instance(Expression)
-   y  = Instance(Expression)
-   z  = Instance(Expression)
+   #x  = Instance(Expression)
+   #y  = Instance(Expression)
+   #z  = Instance(Expression)
+   point  = Instance(Expression)
    length = Int(0)
    
    traits_view = View(
     Item(name = 'length', label='Frame'),
-    Item(name = 'x', style = 'custom'),
-    Item(name = 'y', style = 'custom'),
-    Item(name = 'z', style = 'custom'),
+    #Item(name = 'x', style = 'custom'),
+    #Item(name = 'y', style = 'custom'),
+    #Item(name = 'z', style = 'custom'),
+    Item(name = 'points', style = 'custom'),
     Item(name = 'properties', editor=InstanceEditor(), label = 'Render properties'),
     title = 'Line properties'
    )
@@ -299,11 +301,11 @@ class Trace(PolyLine):
      PolyLine.__init__(self,*args,**kwargs)
      
    def update(self):
-     x=self.x.get_array(first=-self.length)
-     y=self.y.get_array(first=-self.length)
-     z=self.z.get_array(first=-self.length)
-     #self.points = array([x,y,z]).T
-     #print self.point.get_array(first=-self.length).shape
+     #x=self.x.get_array(first=-self.length)
+     #y=self.y.get_array(first=-self.length)
+     #z=self.z.get_array(first=-self.length)
+     self.points = self.point.get_array(first=-self.length) #array([x,y,z]).T
+     print self.point.get_array(first=-self.length).shape
      super(Trace, self).update()
      
 
