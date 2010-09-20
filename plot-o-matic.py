@@ -296,8 +296,6 @@ class PlotOMatic(HasTraits):
 vs = Variables()
 viewers = Viewers(variables = vs)
 
-viewers._add_viewer(TVTKViewer())
-
 iodl = IODriverList(io_drivers = [], variables = vs, viewers_instance = viewers)
 proj = PlotOMatic(io_driver_list = iodl, variables = vs, viewers = viewers)
   
