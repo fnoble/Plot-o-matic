@@ -172,7 +172,7 @@ class Variables(HasTraits):
       data = [vs.get(expr) for vs in self.vars_list[first:last]]
     else:
       data = [self._eval_expr(expr, vs) for vs in self.vars_list[first:last]]
-    data = [d for d in data if d is not None]
+    data = [0.0 if d is None else d for d in data]
     
     data_array = numpy.array(data)
     return data_array
@@ -211,7 +211,7 @@ class Expression(HasTraits):
     self.clear_cache()
 
   def clear_cache(self):
-    self._data_array_cache = None
+    self._data_array_cache = numpy.array([])
     self._data_array_cache_index = 0
 
   def get_curr_value(self):
@@ -226,12 +226,9 @@ class Expression(HasTraits):
       new_shape = list(new_data.shape)
       new_shape[0] = -1 # -1 lets the first index resize appropriately for the data length
       
-      if self._data_array_cache is None:
-        self._data_array_cache = new_data
-      else:
-        self._data_array_cache = numpy.append(self._data_array_cache, new_data)
-      
+      self._data_array_cache = numpy.append(self._data_array_cache, new_data)
       self._data_array_cache.shape = new_shape
       self._data_array_cache_index = last
 
     return self._data_array_cache[first:last]
+
