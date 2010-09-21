@@ -16,8 +16,6 @@ from data_decoder import DataDecoder
 from viewers import Viewer, Viewers
 from variables import Variables
 
-
-
 from plugins.io_drivers_all import *
 from plugins.decoders_all import *
 from plugins.viewers_all import *
@@ -38,16 +36,16 @@ if PROFILE:
   import yappi
   yappi.start(PROFILE_BUILTINS)
 
-def open_file(filter = '', file_name = ''):
-  dialog = wx.FileDialog(None, wildcard = filter, defaultDir = file_name, style = wx.OPEN|wx.FILE_MUST_EXIST)
+def open_file(filter = '', dir = './', file_name = ''):
+  dialog = wx.FileDialog(None, wildcard = filter, defaultFile = file_name, defaultDir = dir, style = wx.OPEN|wx.FILE_MUST_EXIST)
   file_name = ''
   if dialog.ShowModal() == wx.ID_OK:
     file_name = dialog.GetPath()
   dialog.Destroy()
   return file_name
 
-def save_file(filter = '', file_name = ''):
-  dialog = wx.FileDialog(None, wildcard = filter, defaultDir = file_name, style = wx.SAVE|wx.OVERWRITE_PROMPT)
+def save_file(filter = '', dir = './', file_name = ''):
+  dialog = wx.FileDialog(None, wildcard = filter, defaultFile = file_name, defaultDir = dir, style = wx.SAVE|wx.OVERWRITE_PROMPT)
   filename = ''
   if dialog.ShowModal() == wx.ID_OK:
     filename = dialog.GetPath()
@@ -72,7 +70,7 @@ class PlotOMaticHandler(Controller):
     print 'Exit called, really should implement this'
 
   def save_session(self, uii):
-    filename = save_file(filter = 'Plot-o-matic session|*.plot_session', file_name = './')
+    filename = save_file(filter = 'Plot-o-matic session (*.plot_session)|*.plot_session|All files (*)|*', file_name = 'my_session.plot_session')
     if filename != '':
       print "Saving session as '%s'" % filename
       session = uii.object.get_config()
@@ -81,7 +79,7 @@ class PlotOMaticHandler(Controller):
       fp.close()
 
   def open_session(self, uii):
-    filename = open_file(filter = 'Plot-o-matic session|*.plot_session', file_name = '/home/fnoble/Plot-o-matic/')
+    filename = open_file(filter = 'Plot-o-matic session (*.plot_session)|*.plot_session|All files (*)|*', file_name = 'my_session.plot_session')
     if filename != '':
       print "Opening session '%s'" % filename
       fp = open(filename, 'r')
@@ -105,13 +103,13 @@ class PlotOMaticHandler(Controller):
     uii.object.variables.clear()
 
   def save_data(self, uii):
-    filename = save_file()
+    filename = save_file(filter = 'Plot-o-matic data set (*.plot_data)|*.plot_data|All files (*)|*', file_name = 'my_data.plot_data')
     if filename != '':
       uii.object.variables.save_data_set(filename)
       print "Saved data set '%s'" % filename
 
   def open_data(self, uii):
-    filename = open_file()
+    filename = open_file(filter = 'Plot-o-matic data set (*.plot_data)|*.plot_data|All files (*)|*', file_name = 'my_data.plot_data')
     if filename != '':
       uii.object.variables.open_data_set(filename)
       print "Opened data set '%s'" % filename
