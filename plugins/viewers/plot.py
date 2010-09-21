@@ -145,9 +145,13 @@ class Plot(Viewer):
     self.x_label = config['x_label']
     self.y_label = config['y_label']
 
+  def add_expr(self, expr):
+    self.y_exprs.append(self.variables.new_expression(expr))
+    self.update_y_exprs()
+
   @on_trait_change('y_exprs')
   def update_y_exprs(self):
-    print "XXXXXXXXXXX: upd y1"
+    #print "XXXXXXXXXXX: upd y1"
     if self.plot:
       self._lock.acquire()
       if self.plot.plots:
@@ -162,9 +166,9 @@ class Plot(Viewer):
         self.plot_data.set_data('x', range(len(ys)))
         self.plot.plot(('x', str(n)), name = str(n), style='line', color='auto')
       self._lock.release()
-      print "XXXXXXXXXXX: upd y7"
+      #print "XXXXXXXXXXX: upd y7"
       self.update()
-      print "XXXXXXXXXXX: upd y8"
+      #print "XXXXXXXXXXX: upd y8"
 
   @on_trait_change('x_expr')
   def update_x_expr(self):
@@ -195,19 +199,19 @@ class Plot(Viewer):
     return (y_min, y_max)
 
   def update(self):
-    print "XXXXXXXXXXX: u1"
+    #print "XXXXXXXXXXX: u1"
     self._lock.acquire()
     if self.plot:
       for n, expr in enumerate(self.y_exprs):
         ys = self.y_exprs[n].get_array()
         xs = range(len(ys))
-        print "XXXXXXXXXXX: u5"
+        #print "XXXXXXXXXXX: u5"
         self.plot_data.set_data(str(n), ys)
-        print "XXXXXXXXXXX: u5-2"
-        self.plot_data.set_data('x', arange(len(ys))
-      print "XXXXXXXXXXX: u6"
+        #print "XXXXXXXXXXX: u5-2"
+        self.plot_data.set_data('x', xs)
+      #print "XXXXXXXXXXX: u6"
       GUI.invoke_later(self.plot.request_redraw)
     self._lock.release()
-    print "XXXXXXXXXXX: u7"
+    #print "XXXXXXXXXXX: u7"
 
 
