@@ -78,7 +78,7 @@ class PaparazziIvyDecoder(DataDecoder):
     title='Ivy decoder'
   )
 
-  message_dict = ParseMessages()
+  _message_dict = ParseMessages()
 
   def decode(self, data):
     """
@@ -89,7 +89,7 @@ class PaparazziIvyDecoder(DataDecoder):
     
     message_name = data_list[1] 
     values = map(try_float, data_list[2:])
-    field_names = [message_name + '_' + s for s in self.message_dict[message_name]]
+    field_names = [message_name + '_' + s for s in self._message_dict[message_name]]
 
     data_dict = dict(zip(field_names, values)) 
     return data_dict
