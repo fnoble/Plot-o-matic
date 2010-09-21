@@ -103,37 +103,31 @@ class Plot(Viewer):
 
   @on_trait_change('name')
   def update_name(self, new_name):
-    print "XXXXXXXXXXX: name"
     if self.plot:
       self.plot.title = new_name
       GUI.invoke_later(self.plot.request_redraw)
 
   @on_trait_change('x_label')
   def update_x_label(self, new_name):
-    print "XXXXXXXXXXX: xlab"
     if self.plot:
       self.plot.index_axis.title = new_name
       GUI.invoke_later(self.plot.request_redraw)
     
   @on_trait_change('y_label')
   def update_y_label(self, new_name):
-    print "XXXXXXXXXXX: ylab"
     if self.plot:
       self.plot.value_axis.title = new_name
       GUI.invoke_later(self.plot.request_redraw)
 
   def start(self):
-    print "XXXXXXXXXXX: start1"
     self.plot = chaco.Plot(self.plot_data, title=self.name, auto_colors=colours_list)
     self.plot.value_range.tight_bounds = False
-    print "XXXXXXXXXXX: start2"
     #legend = chaco.Legend(component=self.plot, padding=10, align="ul")
     #legend.tools.append(LegendTool(legend, drag_button="right"))
     #self.plot.overlays.append(legend)
     #self.y_exprs += [self.variables.new_expression('a')]
     #self.x_expr = self.variables.new_expression('i')
     self.update_y_exprs()
-    print "XXXXXXXXXXX: start3"
 
   def get_config(self):
     exprs = [expr._expr for expr in self.y_exprs]
@@ -145,36 +139,27 @@ class Plot(Viewer):
     }
 
   def set_config(self, config):
-    print "XXXXXXXXXXX: set conf1"
     exprs = [self.variables.new_expression(expr) for expr in config['expressions']]
-    print "XXXXXXXXXXX: set conf2"
     self.y_exprs = exprs
-    print "XXXXXXXXXXX: set conf3"
     self.name = config['name']
     self.x_label = config['x_label']
     self.y_label = config['y_label']
-    print "XXXXXXXXXXX: set conf4"
 
   @on_trait_change('y_exprs')
   def update_y_exprs(self):
     print "XXXXXXXXXXX: upd y1"
     if self.plot:
       self._lock.acquire()
-      print "XXXXXXXXXXX: upd y2"
       if self.plot.plots:
         for plot in list(self.plot.plots.iterkeys()):
           self.plot.delplot(plot)
-      print "XXXXXXXXXXX: upd y3"
       for n, expr in enumerate(self.y_exprs):
         if expr is None:
           # Initialise a new expression if we added one
           self.y_exprs[n] = self.variables.new_expression('0.5')
-        print "XXXXXXXXXXX: upd y4"
         ys = self.y_exprs[n].get_array()
-        print "XXXXXXXXXXX: upd y5"
         self.plot_data.set_data(str(n), ys)
         self.plot_data.set_data('x', range(len(ys)))
-        print "XXXXXXXXXXX: upd y6"
         self.plot.plot(('x', str(n)), name = str(n), style='line', color='auto')
       self._lock.release()
       print "XXXXXXXXXXX: upd y7"
@@ -212,19 +197,17 @@ class Plot(Viewer):
   def update(self):
     print "XXXXXXXXXXX: u1"
     self._lock.acquire()
-    print "XXXXXXXXXXX: u2"
     if self.plot:
       for n, expr in enumerate(self.y_exprs):
-        print "XXXXXXXXXXX: u3"
         ys = self.y_exprs[n].get_array()
-        print "XXXXXXXXXXX: u4"
         xs = range(len(ys))
         print "XXXXXXXXXXX: u5"
         self.plot_data.set_data(str(n), ys)
+        print "XXXXXXXXXXX: u5-2"
         self.plot_data.set_data('x', xs)
       print "XXXXXXXXXXX: u6"
       GUI.invoke_later(self.plot.request_redraw)
-    print "XXXXXXXXXXX: u7"
     self._lock.release()
+    print "XXXXXXXXXXX: u7"
 
 
