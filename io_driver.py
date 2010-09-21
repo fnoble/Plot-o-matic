@@ -84,14 +84,18 @@ class IODriver(t.Thread, HasTraits):
       decoder._receive_callback(data)
 
   def get_config(self):
-    print "Warning: calling get_config on io driver '%s' that doesn't implement it." % self.__class__.__name__
-
-    return {'name': self.name}
+    print "Warning: using defualt get_config handler on io driver '%s' (which may not work)." % self.__class__.__name__
+    state = self.__getstate__()
+    for key in list(state.iterkeys()):
+      if key.startswith('_'):
+        del state[key]
+    print "  config:", state
+    return state
 
   def set_config(self, config):
-    print "Warning: calling set_config on io driver '%s' that doesn't implement it." % self.__class__.__name__
-    print "  config was:", config
-    self.name = config['name']
+    print "Warning: using defualt set_config handler on io driver '%s' (which may not work)." % self.__class__.__name__
+    print "  config:", config
+    self.__setstate__(config)
 
   def _get_config(self):
     # get decoders
