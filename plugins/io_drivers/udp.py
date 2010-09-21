@@ -18,41 +18,39 @@ class UDPDriver(IODriver):
     Item(name='filter_addr', label='Filter address'),    
     Item(name='ip', label='IP address to bind'),
     Item(label='(use 0.0.0.0 to bind \nto all interfaces)'),
+    Item(name='show_debug_msgs', label='Show debug messages'),
     title='UDP input driver'
   )
   
-  sock = socket.socket()
+  _sock = socket.socket()
 
   port = Int(5000)
   ip = Str('0.0.0.0')
   filter_by_addr = Bool(False)
+  show_debug_msgs = Bool(False)
   filter_addr = Str('')
   
-  #def _ip_default(self):
-  #  print "UDP driver: my hostname '%s' (ip %s)" % (socket.gethostname(), socket.gethostbyname(socket.gethostname()))
-  #  return socket.gethostbyname(socket.gethostname())
-  
   def open(self):
-    self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    self.sock.settimeout(1.0) # seconds
-    self.sock.bind((self.ip, self.port))
+    self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    self._sock.settimeout(1.0) # seconds
+    self._sock.bind((self.ip, self.port))
     
   def close(self):
-    self.sock.close()
+    self._sock.close()
   
   def receive(self):
     try:
-      (data, (addr, port)) = self.sock.recvfrom(102400) # buffer size is 10kb
-      #print "UDP driver: packet from '%s' size %u bytes" % (addr, len(data))
+      (data, (addr, port)) = self._sock.recvfrom(102400) # buffer size is 10kb
+      if self.show_debug_msgs:
+        print "UDP driver: packet from '%s' size %u bytes" % (addr, len(data))
       if self.filter_by_addr and addr != self.filter_addr:
         return None
     except socket.timeout:
       return None
-#    print data
     return data
 
   def rebind_socket(self):
-    self.sock.close()
+    self._sock.close()
     self.open()
 
   @on_trait_change('port')
