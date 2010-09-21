@@ -25,9 +25,9 @@ from enthought.traits.api import HasTraits, Str, Regex, List, Instance, Delegate
 from enthought.traits.ui.api import TreeEditor, TreeNode, View, Item, VSplit, \
   HGroup, Controller, Handler, Group, Include, ValueEditor, HSplit, ListEditor, InstanceEditor
 from enthought.traits.ui.menu import Menu, Action, Separator, MenuBar
-from enthought.traits.ui.file_dialog import open_file, save_file
 
 import yaml
+import wx
 
 PROFILE = False
 PROFILE_BUILTINS = True
@@ -35,8 +35,21 @@ if PROFILE:
   import yappi
   yappi.start(PROFILE_BUILTINS)
 
+def open_file(filter = '', file_name = ''):
+  dialog = wx.FileDialog(None, wildcard = filter, defaultDir = file_name, style = wx.OPEN|wx.FILE_MUST_EXIST)
+  file_name = ''
+  if dialog.ShowModal() == wx.ID_OK:
+    file_name = dialog.GetPath()
+  dialog.Destroy()
+  return file_name
 
-
+def save_file(filter = '', file_name = ''):
+  dialog = wx.FileDialog(None, wildcard = filter, defaultDir = file_name, style = wx.SAVE|wx.OVERWRITE_PROMPT)
+  filename = ''
+  if dialog.ShowModal() == wx.ID_OK:
+    filename = dialog.GetPath()
+  dialog.Destroy()
+  return filename
 
 class PlotOMaticHandler(Controller):
   # ------------ Menu related --------------------
@@ -56,7 +69,7 @@ class PlotOMaticHandler(Controller):
     print 'Exit called, really should implement this'
 
   def save_session(self, uii):
-    filename = 'test.plot_session' #save_file()
+    filename = save_file(filter = 'Plot-o-matic session|*.plot_session', file_name = './')
     if filename != '':
       print "Saving session as '%s'" % filename
       session = uii.object.get_config()
@@ -65,7 +78,7 @@ class PlotOMaticHandler(Controller):
       fp.close()
 
   def open_session(self, uii):
-    filename = 'test.plot_session' #open_file()
+    filename = open_file(filter = 'Plot-o-matic session|*.plot_session', file_name = '/home/fnoble/Plot-o-matic/')
     if filename != '':
       print "Opening session '%s'" % filename
       fp = open(filename, 'r')
