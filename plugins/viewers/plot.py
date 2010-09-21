@@ -4,6 +4,7 @@ from enthought.traits.ui.api import Item, View, HGroup, VGroup, TextEditor, Inst
 import enthought.chaco.api as chaco
 from enthought.enable.component_editor import ComponentEditor
 from enthought.chaco.tools.api import PanTool, ZoomTool, LegendTool, TraitsTool, DragZoom
+from enthought.pyface.api import GUI
 
 from viewers import Viewer
 from variables import Expression
@@ -104,19 +105,19 @@ class Plot(Viewer):
   def update_name(self, new_name):
     if self.plot:
       self.plot.title = new_name
-      self.plot.request_redraw()
+      GUI.invoke_later(self.plot.request_redraw)
 
   @on_trait_change('x_label')
   def update_x_label(self, new_name):
     if self.plot:
       self.plot.index_axis.title = new_name
-      self.plot.request_redraw()
+      GUI.invoke_later(self.plot.request_redraw)
     
   @on_trait_change('y_label')
   def update_y_label(self, new_name):
     if self.plot:
       self.plot.value_axis.title = new_name
-      self.plot.request_redraw()
+      GUI.invoke_later(self.plot.request_redraw)
 
   def start(self):
     self.plot = chaco.Plot(self.plot_data, title=self.name, auto_colors=colours_list)
@@ -198,7 +199,7 @@ class Plot(Viewer):
         xs = range(len(ys))
         self.plot_data.set_data(str(n), ys)
         self.plot_data.set_data('x', xs)
-      self.plot.request_redraw()
+      GUI.invoke_later(self.plot.request_redraw)
     self._lock.release()
 
 
