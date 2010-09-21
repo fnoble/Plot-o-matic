@@ -77,6 +77,15 @@ class IODriver(t.Thread, HasTraits):
     for decoder in self._decoders: #self._decoder_list.get_decoders():
       decoder._receive_callback(data)
 
+  def get_config(self):
+    print "Warning: calling get_config on io driver '%s' that doesn't implement it." % self.__class__.__name__
+    return {'name': self.name}
+
+  def set_config(self, config):
+    print "Warning: calling set_config on io driver '%s' that doesn't implement it." % self.__class__.__name__
+    print "  config was:", config
+    self.name = config['name']
+
 
 
 class IODriverList(HasTraits):
@@ -100,9 +109,30 @@ class IODriverList(HasTraits):
     io_driver.stop()
     self.io_drivers.remove(io_driver)
 
+  def _remove_all_io_drivers(self):
+    for io_driver in self.io_drivers:
+      self._remove_io_driver(io_driver)
+
   def _add_io_driver(self, io_driver):
     print "Adding IO driver:", io_driver.name
     io_driver.start()
     self.io_drivers.append(io_driver)
+
+  def get_config(self):
+    config = []
+    for io_driver in self.io_drivers:
+      io_driver_config = {io_driver.__class__.__name__: io_driver.get_config()}
+      config.append(io_driver_config)
+    return config
+
+  def set_config(self, config):
+    from plugin_manager import get_io_driver_plugin_by_name
+    self._remove_all_io_drivers()
+    for io_driver_config in config:
+      io_driver_plugin_name = list(io_driver_config.iterkeys())[0]
+      io_driver_plugin_config = io_driver_config[io_driver_plugin_name]
+      new_io_driver = get_io_driver_plugin_by_name(io_driver_plugin_name)()
+      self._add_io_driver(new_io_driver)
+      new_io_driver.set_config(io_driver_plugin_config)
 
 
