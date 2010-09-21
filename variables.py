@@ -194,7 +194,9 @@ class Expression(HasTraits):
   _data_array_cache = None
   _data_array_cache_index = Int(0)
 
-  view = View(Item('_expr', show_label = False, editor=TextEditor(enter_set=True, auto_set=False)))
+  view = View(
+      Item('_expr', show_label = False, editor=TextEditor(enter_set=True, auto_set=False))
+  )
 
   def __init__(self, variables, expr, **kwargs):
     HasTraits.__init__(self, **kwargs)
