@@ -1,4 +1,4 @@
-from enthought.traits.api import HasTraits, Int, Float, Dict, List, Property, Enum, Color, Instance, Str, Any, on_trait_change, Event, Button, BaseStr
+from enthought.traits.api import HasTraits, Int, Float, Bool, Dict, List, Property, Enum, Color, Instance, Str, Any, on_trait_change, Event, Button, BaseStr
 from enthought.traits.ui.api import View, Item, ValueEditor, TabularEditor, HSplit, TextEditor
 from enthought.traits.ui.tabular_adapter import TabularAdapter
 import time
@@ -32,12 +32,15 @@ class Variables(HasTraits):
 
   expressions = List()
 
+  vars_table_update = Bool(True)
+
   clear_button = Button('Clear')
   view = View(
            HSplit(
              Item(name = 'clear_button', show_label = False),
              Item(name = 'max_samples', label = 'Max samples'),
-             Item(name = 'sample_count', label = 'Samples')
+             Item(name = 'sample_count', label = 'Samples'),
+             Item(name = 'vars_table_update', label = 'Update variables view')
            ),
            Item(
              name = 'vars_table_list',
@@ -120,8 +123,9 @@ class Variables(HasTraits):
     self.start_time = time.time() - self.vars_list[-1]['time']
 
   def update_vars_table(self):
-    vars_list_unsorted = [(name, repr(val)) for (name, val) in list(self.vars_pool.iteritems())]
-    self.vars_table_list = sorted(vars_list_unsorted, key=(lambda x: x[0].lower()))
+    if self.vars_table_update:
+      vars_list_unsorted = [(name, repr(val)) for (name, val) in list(self.vars_pool.iteritems())]
+      self.vars_table_list = sorted(vars_list_unsorted, key=(lambda x: x[0].lower()))
   
   def test_expr(self, expr):
     is_ok = (True, '')
