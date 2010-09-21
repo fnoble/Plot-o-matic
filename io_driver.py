@@ -67,7 +67,7 @@ class IODriver(t.Thread, HasTraits):
    
   def _add_decoder(self, decoder):
     """ Used internally to add decoders so they receive data from the input driver. """
-    decoder.variables = self._variables
+    decoder._variables = self._variables
     self._decoders += [decoder]
 
   def _remove_decoder(self, decoder):
