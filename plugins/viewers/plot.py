@@ -124,6 +124,22 @@ class Plot(Viewer):
     #self.x_expr = self.variables.new_expression('i')
     self.update_y_exprs()
 
+  def get_config(self):
+    exprs = [expr._expr for expr in self.y_exprs]
+    return {
+        'name': self.name,
+        'x_label': self.x_label,
+        'y_label': self.y_label,
+        'expressions': exprs
+    }
+
+  def set_config(self, config):
+    exprs = [self.variables.new_expression(expr) for expr in config['expressions']]
+    self.y_exprs = exprs
+    self.name = config['name']
+    self.x_label = config['x_label']
+    self.y_label = config['y_label']
+
   @on_trait_change('y_exprs')
   def update_y_exprs(self):
     if self.plot:
