@@ -8,23 +8,24 @@ class JobySimDecoder(DataDecoder):
       Decodes lines of text formatted using a simple format.
   """
   name = Str('JobySim Decoder')
+  
   view = View(
     title='JobySim decoder'
   )
-  sub_re = re.compile('\W+')
-  names = List()
+  
+  _sub_re = re.compile('\W+')
+  _names = List()
 
   def decode(self, data):
     """
-        Decode an input string of the form ~variable_name#value.
+        Decodes input from the Joby Simulator.
     """
     if data[0] == '#':
       # list of names
-      self.names = [self.sub_re.sub('_', name) for name in data[1:].split('!')]
+      self._names = [self._sub_re.sub('_', name) for name in data[1:].split('!')]
       print "JobySimDecoder got names:", self.names
       return None
 
     vals = map(eval, data.split('!'))
-    d = dict(zip(self.names, vals))
-    #print d
+    d = dict(zip(self._names, vals))
     return d
