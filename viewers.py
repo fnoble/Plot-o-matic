@@ -6,7 +6,6 @@ import time
 
 from variables import Variables
 
-
 class Viewer(HasTraits):
   name = Str('Viewer')
   refresh_rate = Range(0.5, 30, 10)
@@ -37,6 +36,19 @@ class Viewer(HasTraits):
   def update(self):
     pass
 
+  def add_expr(self, expr):
+    pass
+
+  def get_config(self):
+    print "Warning: calling get_config on viewer '%s' that doesn't implement it." % self.__class__.__name__
+    return {'name': self.name, 'refresh_rate': self.refresh_rate}
+
+  def set_config(self, config):
+    print "Warning: calling set_config on viewer '%s' that doesn't implement it." % self.__class__.__name__
+    print "  config was:", config
+    self.name = config['name']
+    self.refresh_rate = config['refresh_rate']
+
 
 class Viewers(HasTraits, t.Thread):
   viewers = List(Viewer)
@@ -58,7 +70,10 @@ class Viewers(HasTraits, t.Thread):
     """ Thread to update viewers. """
     while not self._wants_to_terminate:
       if self.selected_viewer:
-        self.selected_viewer.update()
+        try:
+          self.selected_viewer.update()
+        except Exception as e:
+          print "Exception in viewer '%s':" % self.selected_viewer.name, e
         time.sleep(1.0/self.selected_viewer.refresh_rate)
       else:
         time.sleep(0.5)
@@ -88,4 +103,25 @@ class Viewers(HasTraits, t.Thread):
   def _remove_viewer(self, viewer):
     viewer.stop()
     self.viewers.remove(viewer)
+
+  def _remove_all_viewers(self):
+    for viewer in self.viewers:
+      self._remove_viewer(viewer)
+
+  def get_config(self):
+    config = []
+    for viewer in self.viewers:
+      viewer_config = {viewer.__class__.__name__: viewer.get_config()}
+      config.append(viewer_config)
+    return config
+
+  def set_config(self, config):
+    from plugin_manager import get_viewer_plugin_by_name
+    self._remove_all_viewers()
+    for viewer_config in config:
+      viewer_plugin_name = list(viewer_config.iterkeys())[0]
+      viewer_plugin_config = viewer_config[viewer_plugin_name]
+      new_viewer = get_viewer_plugin_by_name(viewer_plugin_name)()
+      self._add_viewer(new_viewer)
+      new_viewer.set_config(viewer_plugin_config)
 

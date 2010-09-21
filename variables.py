@@ -1,4 +1,4 @@
-from enthought.traits.api import HasTraits, Int, Float, Dict, List, Property, Enum, Color, Instance, Str, Any, on_trait_change, Event, Button
+from enthought.traits.api import HasTraits, Int, Float, Dict, List, Property, Enum, Color, Instance, Str, Any, on_trait_change, Event, Button, BaseStr
 from enthought.traits.ui.api import View, Item, ValueEditor, TabularEditor, HSplit, TextEditor
 from enthought.traits.ui.tabular_adapter import TabularAdapter
 import time
@@ -9,6 +9,9 @@ import cPickle as pickle
 expression_context = {}
 expression_context.update(numpy.__dict__)
 
+
+def update_context(context):
+  expression_context.update(context)
 
 class VariableTableAdapter(TabularAdapter):
   columns = [('Variable name', 0), ('Value', 1)]
@@ -119,7 +122,15 @@ class Variables(HasTraits):
   def update_vars_table(self):
     vars_list_unsorted = [(name, repr(val)) for (name, val) in list(self.vars_pool.iteritems())]
     self.vars_table_list = sorted(vars_list_unsorted, key=(lambda x: x[0].lower()))
-    
+  
+  def test_expr(self, expr):
+    is_ok = (True, '')
+    try:
+      eval(expr, expression_context, self.vars_pool)
+    except Exception as e:
+      is_ok = (False, repr(e))
+    return is_ok
+
   def _eval_expr(self, expr, vars_pool=None):
     """
         Returns the value of a python expression evaluated with 
@@ -163,22 +174,29 @@ class Variables(HasTraits):
       data = [self._eval_expr(expr, vs) for vs in self.vars_list[first:last]]
     data = [d for d in data if d is not None]
     
-    #try:
-    #  data = [try: eval(expr, expression_context, vs); except: pass; for vs in self.vars_list[first:last]]
-    #except Exception as e:
-    #  print e
-    #  data = []
-
     data_array = numpy.array(data)
     return data_array
 
+class ExpressionString(BaseStr):
+  default_value = ''
+
+  def validate(self, object, name, value):
+    value = BaseStr.validate(self, object, name, value)
+    is_ok, self.info_text = object._vars.test_expr(value)
+    if is_ok:
+      return value
+    #self.error(object, name, value) 
+    return value
+
 class Expression(HasTraits):
   _vars = Instance(Variables)
-  _expr = Str('')
-  _data_array_cache = numpy.array([])
+  _expr = ExpressionString('')
+  _data_array_cache = None
   _data_array_cache_index = Int(0)
 
-  view = View(Item('_expr', show_label = False, editor=TextEditor(enter_set=True, auto_set=False)))
+  view = View(
+      Item('_expr', show_label = False, editor=TextEditor(enter_set=True, auto_set=False))
+  )
 
   def __init__(self, variables, expr, **kwargs):
     HasTraits.__init__(self, **kwargs)
@@ -193,7 +211,7 @@ class Expression(HasTraits):
     self.clear_cache()
 
   def clear_cache(self):
-    self._data_array_cache = numpy.array([])
+    self._data_array_cache = None
     self._data_array_cache_index = 0
 
   def get_curr_value(self):
@@ -201,10 +219,19 @@ class Expression(HasTraits):
 
   def get_array(self, first=0, last=None):
     first, last = self._vars.bound_array(first, last)
-    
     if last > self._data_array_cache_index:
       #print "Cache miss of", (last - self._data_array_cache_index)
-      self._data_array_cache = numpy.append(self._data_array_cache, self._vars._get_array(self._expr, self._data_array_cache_index, last))
+      new_data = self._vars._get_array(self._expr, self._data_array_cache_index, last)
+
+      new_shape = list(new_data.shape)
+      new_shape[0] = -1 # -1 lets the first index resize appropriately for the data length
+      
+      if self._data_array_cache is None:
+        self._data_array_cache = new_data
+      else:
+        self._data_array_cache = numpy.append(self._data_array_cache, new_data)
+      
+      self._data_array_cache.shape = new_shape
       self._data_array_cache_index = last
 
     return self._data_array_cache[first:last]

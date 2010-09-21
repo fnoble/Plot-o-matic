@@ -1,4 +1,4 @@
-from enthought.traits.api import Str, Float, File, Int, Bool, on_trait_change
+from enthought.traits.api import Str, Float, Range, Int, Bool, on_trait_change
 from enthought.traits.ui.api import View, Item
 
 import time
@@ -18,48 +18,54 @@ class UDPDriver(IODriver):
     Item(name='filter_addr', label='Filter address'),    
     Item(name='ip', label='IP address to bind'),
     Item(label='(use 0.0.0.0 to bind \nto all interfaces)'),
+    Item(name='show_debug_msgs', label='Show debug messages'),
+    Item(name='buffer_size', label='Buffer size / kb'),
+    Item(name='timeout', label='Timeout / s'),
     title='UDP input driver'
   )
   
-  sock = socket.socket()
+  _sock = socket.socket()
 
-  port = Int(5000)
+  port = Range(1024, 65535, 5000)
+  buffer_size = Range(1, 4096, 10) # no reason not to go above 4MB but there should be some limit.
+  timeout = Float(1.0)
   ip = Str('0.0.0.0')
   filter_by_addr = Bool(False)
+  show_debug_msgs = Bool(False)
   filter_addr = Str('')
   
-  #def _ip_default(self):
-  #  print "UDP driver: my hostname '%s' (ip %s)" % (socket.gethostname(), socket.gethostbyname(socket.gethostname()))
-  #  return socket.gethostbyname(socket.gethostname())
-  
   def open(self):
-    self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    self.sock.settimeout(1.0) # seconds
-    self.sock.bind((self.ip, self.port))
+    self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    self._sock.settimeout(self.timeout) # seconds
+    self._sock.bind((self.ip, self.port))
     
   def close(self):
-    self.sock.close()
+    self._sock.close()
   
   def receive(self):
     try:
-      (data, (addr, port)) = self.sock.recvfrom(102400) # buffer size is 10kb
-      #print "UDP driver: packet from '%s' size %u bytes" % (addr, len(data))
+      (data, (addr, port)) = self._sock.recvfrom(1024*self.buffer_size)
+      if self.show_debug_msgs:
+        print "UDP driver: packet from '%s' size %u bytes" % (addr, len(data))
       if self.filter_by_addr and addr != self.filter_addr:
         return None
     except socket.timeout:
       return None
-#    print data
     return data
 
   def rebind_socket(self):
-    self.sock.close()
+    self.close()
     self.open()
 
   @on_trait_change('port')
-  def change_port(self, old_port, new_port):
+  def change_port(self):
     self.rebind_socket()
     
   @on_trait_change('address')
-  def change_address(self, old_address, new_address):
+  def change_address(self):
+    self.rebind_socket()
+
+  @on_trait_change('timeout')
+  def change_timeout(self):
     self.rebind_socket()
     

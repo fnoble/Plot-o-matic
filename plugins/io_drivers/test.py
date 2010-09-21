@@ -1,20 +1,23 @@
-from io_driver import IODriver
 from enthought.traits.api import Str, Range
-from enthought.traits.ui.api import View, Item
+from enthought.traits.ui.api import View, Item, TextEditor
+
 import time
+
+from io_driver import IODriver
 
 class TestDriver(IODriver):
   """
       Simple driver for testing, sends the same string periodically.
   """
+
   name = Str('Test Driver')
   view = View(
-    Item(name = 'data', label='Test string'),
+    Item(name = 'data', label='Test string', editor=TextEditor(enter_set=True, auto_set=False)),
     Item(name = 'period_ms', label='Period / ms'),
     title='Test input driver'
   )
   
-  data = Str('Data,2,4,6,7.8')
+  data = Str('')
   period_ms = Range(10, 10000, 200)
   
   def receive(self):

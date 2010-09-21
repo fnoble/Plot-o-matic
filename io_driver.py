@@ -10,6 +10,7 @@ class IODriver(t.Thread, HasTraits):
       Base class for a generic input driver. Runs in its own thread and grabs input from the 
       source and passes it out to the decoding layer. 
   """
+  _variables = Instance(Variables)
   _decoders = List(DataDecoder)
   _wants_to_terminate = False
   _use_thread = True
@@ -66,17 +67,60 @@ class IODriver(t.Thread, HasTraits):
    
   def _add_decoder(self, decoder):
     """ Used internally to add decoders so they receive data from the input driver. """
+    decoder._variables = self._variables
     self._decoders += [decoder]
 
   def _remove_decoder(self, decoder):
     """ Used internally to remove decoders from an input driver. """
     self._decoders.remove(decoder)
+
+  def _remove_all_decoders(self):
+    for decoder in self._decoders:
+      self._remove_decoder(decoder)
     
   def pass_data(self, data):
     """ Pass data on to the decoding layer. """
     for decoder in self._decoders: #self._decoder_list.get_decoders():
       decoder._receive_callback(data)
 
+  def get_config(self):
+    print "Warning: using defualt get_config handler on io driver '%s' (which may not work)." % self.__class__.__name__
+    state = self.__getstate__()
+    for key in list(state.iterkeys()):
+      if key.startswith('_'):
+        del state[key]
+    print "  config:", state
+    return state
+
+  def set_config(self, config):
+    print "Warning: using defualt set_config handler on io driver '%s' (which may not work)." % self.__class__.__name__
+    print "  config:", config
+    self.__setstate__(config)
+
+  def _get_config(self):
+    # get decoders
+    decoder_configs = []
+    for decoder in self._decoders:
+      decoder_config = {decoder.__class__.__name__: decoder.get_config()}
+      decoder_configs.append(decoder_config)
+    
+    config = self.get_config()
+    config.update({'decoders': decoder_configs})
+    return config
+
+  def _set_config(self, config):
+    from plugin_manager import get_decoder_plugin_by_name
+    # add decoders
+    self._remove_all_decoders()
+    for decoder_config in config['decoders']:
+      decoder_plugin_name = list(decoder_config.iterkeys())[0]
+      decoder_plugin_config = decoder_config[decoder_plugin_name]
+      new_decoder = get_decoder_plugin_by_name(decoder_plugin_name)()
+      self._add_decoder(new_decoder)
+      new_decoder.set_config(decoder_plugin_config)
+
+    del config['decoders']
+    self.set_config(config)
 
 
 class IODriverList(HasTraits):
@@ -100,9 +144,31 @@ class IODriverList(HasTraits):
     io_driver.stop()
     self.io_drivers.remove(io_driver)
 
+  def _remove_all_io_drivers(self):
+    for io_driver in self.io_drivers:
+      self._remove_io_driver(io_driver)
+
   def _add_io_driver(self, io_driver):
     print "Adding IO driver:", io_driver.name
+    io_driver._variables = self.variables
     io_driver.start()
     self.io_drivers.append(io_driver)
+
+  def get_config(self):
+    config = []
+    for io_driver in self.io_drivers:
+      io_driver_config = {io_driver.__class__.__name__: io_driver._get_config()}
+      config.append(io_driver_config)
+    return config
+
+  def set_config(self, config):
+    from plugin_manager import get_io_driver_plugin_by_name
+    self._remove_all_io_drivers()
+    for io_driver_config in config:
+      io_driver_plugin_name = list(io_driver_config.iterkeys())[0]
+      io_driver_plugin_config = io_driver_config[io_driver_plugin_name]
+      new_io_driver = get_io_driver_plugin_by_name(io_driver_plugin_name)()
+      self._add_io_driver(new_io_driver)
+      new_io_driver._set_config(io_driver_plugin_config)
 
 

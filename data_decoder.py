@@ -7,7 +7,7 @@ class DataDecoder(HasTraits):
       become the variables we can plot.
   """
   name = 'Decoder'
-  variables = Instance(Variables) 
+  _variables = Instance(Variables) 
   
   def decode(self, data):
     """
@@ -21,4 +21,19 @@ class DataDecoder(HasTraits):
   def _receive_callback(self, data):
     new_vars = self.decode(data)
     if new_vars:
-      self.variables.update_variables(new_vars)
+      self._variables.update_variables(new_vars)
+
+  def get_config(self):
+    print "Warning: using defualt get_config handler on decoder '%s' (which may not work)." % self.__class__.__name__
+    state = self.__getstate__()
+    for key in list(state.iterkeys()):
+      if key.startswith('_'):
+        del state[key]
+    print "  config:", state
+    return state
+
+  def set_config(self, config):
+    print "Warning: using defualt set_config handler on decoder '%s' (which may not work)." % self.__class__.__name__
+    print "  config:", config
+    self.__setstate__(config)
+

@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 
-#import psyco
-#psyco.full()
-
 # If wxversion is installed, make sure we are
 # using wx >= 2.8
 try:
@@ -17,12 +14,9 @@ from viewers import Viewer, Viewers
 from variables import Variables
 
 
-
 from plugins.io_drivers_all import *
 from plugins.decoders_all import *
 from plugins.viewers_all import *
-
-from plugin_manager import *
 
 from enthought.traits.api import HasTraits, Str, Regex, List, Instance, DelegatesTo
 from enthought.traits.ui.api import TreeEditor, TreeNode, View, Item, VSplit, \
@@ -30,7 +24,8 @@ from enthought.traits.ui.api import TreeEditor, TreeNode, View, Item, VSplit, \
 from enthought.traits.ui.menu import Menu, Action, Separator, MenuBar
 from enthought.traits.ui.file_dialog import open_file, save_file
 
-import yaml
+#import cPickle as pickle
+import pickle
 
 PROFILE = False
 PROFILE_BUILTINS = True
@@ -38,6 +33,21 @@ if PROFILE:
   import yappi
   yappi.start(PROFILE_BUILTINS)
 
+
+def find_io_driver_plugins():
+  return IODriver.__subclasses__()
+def get_io_driver_plugin_by_name(name):
+  return filter(lambda x: x.__name__ == name, find_io_driver_plugins())[0]
+
+def find_decoder_plugins():
+  return DataDecoder.__subclasses__()
+def get_decoder_plugin_by_name(name):
+  return filter(lambda x: x.__name__ == name, find_decoder_plugins())[0]
+
+def find_viewer_plugins():
+  return Viewer.__subclasses__()
+def get_viewer_plugin_by_name(name):
+  return filter(lambda x: x.__name__ == name, find_viewer_plugins())[0]
 
 
 
@@ -59,22 +69,11 @@ class PlotOMaticHandler(Controller):
     print 'Exit called, really should implement this'
 
   def save_session(self, uii):
-    filename = 'test.plot_session' #save_file()
-    if filename != '':
-      print "Saving session as '%s'" % filename
-      session = uii.object.get_config()
-      fp = open(filename, 'w')
-      yaml.dump(session, fp, default_flow_style=False)
-      fp.close()
+    print 'save'
+    print pickle.dumps(uii.object.viewers)
 
   def open_session(self, uii):
-    filename = 'test.plot_session' #open_file()
-    if filename != '':
-      print "Opening session '%s'" % filename
-      fp = open(filename, 'r')
-      session = yaml.load(fp)
-      fp.close()
-      uii.object.set_config(session)
+    print 'open'
   
   clear_data_action = Action(name = '&Clear Data', action='clear_data')
   save_data_action = Action(name = '&Save Data Set', action='save_data')
@@ -95,13 +94,13 @@ class PlotOMaticHandler(Controller):
     filename = save_file()
     if filename != '':
       uii.object.variables.save_data_set(filename)
-      print "Saved data set '%s'" % filename
+      print "Saved data set as", filename
 
   def open_data(self, uii):
     filename = open_file()
     if filename != '':
       uii.object.variables.open_data_set(filename)
-      print "Opened data set '%s'" % filename
+      print "Opened data set ", filename
 
 
   # ------------ Tree related --------------------
@@ -150,7 +149,7 @@ class PlotOMaticHandler(Controller):
 
   def add_decoder(self, editor, io_driver, decoder_name):
     io_driver_list = editor._menu_parent_object
-    new_decoder = get_decoder_plugin_by_name(decoder_name)()
+    new_decoder = get_decoder_plugin_by_name(decoder_name)(variables = io_driver_list.variables)
     io_driver._add_decoder(new_decoder)
     editor.update_editor()
     
@@ -291,22 +290,17 @@ class PlotOMatic(HasTraits):
   def stop(self):
     self.viewers.stop()
     self.io_driver_list.stop_all()
-
-  def get_config(self):
-    config = {}
-    config['io_drivers'] = self.io_driver_list.get_config()
-    config['viewers'] = self.viewers.get_config()
-    return config
-
-  def set_config(self, config):
-    self.io_driver_list.set_config(config['io_drivers'])
-    self.viewers.set_config(config['viewers'])
-    self.variables.clear()
+      
 
 vs = Variables()
 viewers = Viewers(variables = vs)
 
-iodl = IODriverList(variables = vs, viewers_instance = viewers)
+from plotconfig import TVTKconfig
+config=TVTKconfig(vs)
+
+viewers._add_viewer(TVTKViewer(config))
+
+iodl = IODriverList(io_drivers = [], variables = vs, viewers_instance = viewers)
 proj = PlotOMatic(io_driver_list = iodl, variables = vs, viewers = viewers)
   
 
