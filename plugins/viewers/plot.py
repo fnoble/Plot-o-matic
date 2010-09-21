@@ -204,7 +204,7 @@ class Plot(Viewer):
         print "XXXXXXXXXXX: u5"
         self.plot_data.set_data(str(n), ys)
         print "XXXXXXXXXXX: u5-2"
-        self.plot_data.set_data('x', xs)
+        self.plot_data.set_data('x', arange(len(ys))
       print "XXXXXXXXXXX: u6"
       GUI.invoke_later(self.plot.request_redraw)
     self._lock.release()
