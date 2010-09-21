@@ -298,11 +298,12 @@ class PlotOMatic(HasTraits):
   def set_config(self, config):
     self.io_driver_list.set_config(config['io_drivers'])
     self.viewers.set_config(config['viewers'])
+    self.variables.clear()
 
 vs = Variables()
 viewers = Viewers(variables = vs)
 
-iodl = IODriverList(io_drivers = [], variables = vs, viewers_instance = viewers)
+iodl = IODriverList(variables = vs, viewers_instance = viewers)
 proj = PlotOMatic(io_driver_list = iodl, variables = vs, viewers = viewers)
   
 
