@@ -22,3 +22,9 @@ class DataDecoder(HasTraits):
     new_vars = self.decode(data)
     if new_vars:
       self.variables.update_variables(new_vars)
+
+  def get_config(self):
+    return {'name': self.name}
+  
+  def set_config(self, config):
+    self.name = config['name']

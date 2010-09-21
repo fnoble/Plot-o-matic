@@ -147,7 +147,7 @@ class PlotOMaticHandler(Controller):
 
   def add_decoder(self, editor, io_driver, decoder_name):
     io_driver_list = editor._menu_parent_object
-    new_decoder = get_decoder_plugin_by_name(decoder_name)(variables = io_driver_list.variables)
+    new_decoder = get_decoder_plugin_by_name(decoder_name)()
     io_driver._add_decoder(new_decoder)
     editor.update_editor()
     
@@ -298,8 +298,6 @@ class PlotOMatic(HasTraits):
   def set_config(self, config):
     self.io_driver_list.set_config(config['io_drivers'])
     self.viewers.set_config(config['viewers'])
-    self.tree_editor.update_editor()
-
 
 vs = Variables()
 viewers = Viewers(variables = vs)
