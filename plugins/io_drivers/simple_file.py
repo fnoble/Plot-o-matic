@@ -17,19 +17,19 @@ class SimpleFileDriver(IODriver):
 
   data_file = File('test1')
   period_ms = Float(1000.0)
-  fp = file
+  _fp = file
   
   def open(self):
-    self.fp = open(self.data_file, 'r')
+    self._fp = open(self.data_file, 'r')
     
   def close(self):
-    self.fp.close()
+    self._fp.close()
   
   def receive(self):    
     time.sleep(self.period_ms / 1000.0)
-    return self.fp.readline()
+    return self._fp.readline()
       
   @on_trait_change('data_file')
   def reopen_file(self, old_file, new_file):
-    self.fp.close()
-    self.fp = open(self.data_file, 'r')
+    self._fp.close()
+    self._fp = open(self.data_file, 'r')
