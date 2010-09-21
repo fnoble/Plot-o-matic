@@ -307,16 +307,18 @@ class PlotOMatic(HasTraits):
     return config
 
   def set_config(self, config):
-    self.io_driver_list.set_config(config['io_drivers'])
-    self.viewers.set_config(config['viewers'])
+    if 'io_drivers' in config:
+      self.io_driver_list.set_config(config['io_drivers'])
+    if 'viewers' in config:
+      self.viewers.set_config(config['viewers'])
     self.variables.clear()
 
 vs = Variables()
 viewers = Viewers(variables = vs)
 
+
 iodl = IODriverList(variables = vs, viewers_instance = viewers)
 proj = PlotOMatic(io_driver_list = iodl, variables = vs, viewers = viewers)
-  
 
 proj.start()
 proj.configure_traits()
