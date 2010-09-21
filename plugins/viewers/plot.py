@@ -8,6 +8,8 @@ from enthought.chaco.tools.api import PanTool, ZoomTool, LegendTool, TraitsTool,
 from viewers import Viewer
 from variables import Expression
 
+import threading as t
+
 """
 colours_list = [
   (0xED,0xD4,0x00),
@@ -48,6 +50,8 @@ class Plot(Viewer):
   scroll_width = Float(300)
   
   legend = Bool(False)
+
+  _lock = t.Lock()
     
   traits_view = View(
     Item(name = 'name', label = 'Plot name'),
@@ -94,7 +98,7 @@ class Plot(Viewer):
       show_label = False,
     ),
     resizable = True
-  )
+    )
 
   @on_trait_change('name')
   def update_name(self, new_name):
@@ -143,6 +147,7 @@ class Plot(Viewer):
   @on_trait_change('y_exprs')
   def update_y_exprs(self):
     if self.plot:
+      self._lock.acquire()
       if self.plot.plots:
         for plot in list(self.plot.plots.iterkeys()):
           self.plot.delplot(plot)
@@ -154,6 +159,7 @@ class Plot(Viewer):
         self.plot_data.set_data(str(n), ys)
         self.plot_data.set_data('x', range(len(ys)))
         self.plot.plot(('x', str(n)), name = str(n), style='line', color='auto')
+      self._lock.release()
       self.update()
 
   @on_trait_change('x_expr')
@@ -185,6 +191,7 @@ class Plot(Viewer):
     return (y_min, y_max)
 
   def update(self):
+    self._lock.acquire()
     if self.plot:
       for n, expr in enumerate(self.y_exprs):
         ys = self.y_exprs[n].get_array()
@@ -192,5 +199,6 @@ class Plot(Viewer):
         self.plot_data.set_data(str(n), ys)
         self.plot_data.set_data('x', xs)
       self.plot.request_redraw()
+    self._lock.release()
 
 
