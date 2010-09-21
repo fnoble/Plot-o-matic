@@ -21,7 +21,7 @@ class JobySimDecoder(DataDecoder):
     if data[0] == '#':
       # list of names
       self.names = [self.sub_re.sub('_', name) for name in data[1:].split('!')]
-      print "JobySimDecoder got names:", self.names
+      #print "JobySimDecoder got names:", self.names
       return None
 
     vals = map(eval, data.split('!'))
