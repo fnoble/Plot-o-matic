@@ -35,6 +35,7 @@ class TVTKconfig(PrimitiveCollection):
     diskframe=Frame(ned,'tr(AP_DISK_r_n2d_n_x,AP_DISK_r_n2d_n_y,AP_DISK_r_n2d_n_z)*quat(AP_DISK_q_n2d_q0,AP_DISK_q_n2d_q1,AP_DISK_q_n2d_q2,AP_DISK_q_n2d_q3)',name="diskframe")
     orientation=Frame(ned,'tr(-50,-50,0)*quat(AP_EST2USER_0_q_n2b_q0,AP_EST2USER_0_q_n2b_q1,AP_EST2USER_0_q_n2b_q2,AP_EST2USER_0_q_n2b_q3)')
     airframe=Frame(ned,'tr(AP_EST2USER_0_r_n2b_n_x,AP_EST2USER_0_r_n2b_n_y,AP_EST2USER_0_r_n2b_n_z)*quat(AP_EST2USER_0_q_n2b_q0,AP_EST2USER_0_q_n2b_q1,AP_EST2USER_0_q_n2b_q2,AP_EST2USER_0_q_n2b_q3)')
+    #airframe_gps=Frame(ned,'tr(HENRY_GNSS_North,HENRY_GNSS_East,HENRY_GNSS_Down)*quat(AP_EST2USER_0_q_n2b_q0,AP_EST2USER_0_q_n2b_q1,AP_EST2USER_0_q_n2b_q2,AP_EST2USER_0_q_n2b_q3)')
 
     ax=Frame(ned,'sc(50)')
     self.add(Arrow(ax,color=colors.red))
@@ -51,9 +52,84 @@ class TVTKconfig(PrimitiveCollection):
     #self.add(Text(orientation,text='Reference only'))
 
     self.add(Arnold1(airframe,T='sc(5)'))#,color=colors.red))
-    self.add(Trace(ned,point=variables.new_expression('[AP_EST2USER_0_r_n2b_n_x,AP_EST2USER_0_r_n2b_n_y,AP_EST2USER_0_r_n2b_n_z]'),color=colors.green,length=2000))
+    #self.add(Arnold1(airframe_gps,T='sc(5)'))#,color=colors.red))
+    self.add(Circle(diskframe,radius=variables.new_expression('AP_DISK_radius')))
+    self.add(Trace(
+      ned,
+      x = variables.new_expression('AP_EST2USER_0_r_n2b_n_x'),
+      y = variables.new_expression('AP_EST2USER_0_r_n2b_n_y'),
+      z = variables.new_expression('AP_EST2USER_0_r_n2b_n_z'),
+      color=colors.green,
+      length=2000
+    ))
+    self.add(Trace(
+      ned,
+      x = variables.new_expression('AP_EST2USER_0_r_n2b_n_x'),
+      y = variables.new_expression('AP_EST2USER_0_r_n2b_n_y'),
+      z = variables.new_expression('0'),
+      color=colors.green,
+      length=2000
+    ))
+
+    self.add(Trace(
+      ned,
+      x = variables.new_expression('HENRY_GNSS_North'),
+      y = variables.new_expression('HENRY_GNSS_East'),
+      z = variables.new_expression('HENRY_GNSS_Down'),
+      color=colors.purple,
+      length=2000
+    ))
+    self.add(Trace(
+      ned,
+      x = variables.new_expression('HENRY_GNSS_North'),
+      y = variables.new_expression('HENRY_GNSS_East'),
+      z = variables.new_expression('0'),
+      color=colors.maroon,
+      length=2000
+    ))
+
+
+    self.add(Trace(
+      ned,
+      x = variables.new_expression('AP_ACADO_TRAJ_r_n2t_n_0_x'),
+      y = variables.new_expression('AP_ACADO_TRAJ_r_n2t_n_0_y'),
+      z = variables.new_expression('AP_ACADO_TRAJ_r_n2t_n_0_z'),
+      color=colors.pink,
+      length=600
+    ))
+    self.add(Trace(
+      ned,
+      x = variables.new_expression('AP_ACADO_TRAJ_r_n2t_n_1_x'),
+      y = variables.new_expression('AP_ACADO_TRAJ_r_n2t_n_1_y'),
+      z = variables.new_expression('AP_ACADO_TRAJ_r_n2t_n_1_z'),
+      color=colors.pink,
+      length=600
+    ))
+    self.add(Trace(
+      ned,
+      x = variables.new_expression('AP_ACADO_TRAJ_r_n2t_n_2_x'),
+      y = variables.new_expression('AP_ACADO_TRAJ_r_n2t_n_2_y'),
+      z = variables.new_expression('AP_ACADO_TRAJ_r_n2t_n_2_z'),
+      color=colors.pink,
+      length=600
+    ))
+    self.add(Trace(
+      ned,
+      x = variables.new_expression('AP_ACADO_TRAJ_r_n2t_n_3_x'),
+      y = variables.new_expression('AP_ACADO_TRAJ_r_n2t_n_3_y'),
+      z = variables.new_expression('AP_ACADO_TRAJ_r_n2t_n_3_z'),
+      color=colors.pink,
+      length=600
+    ))
+    self.add(Trace(
+      ned,
+      x = variables.new_expression('AP_ACADO_TRAJ_r_n2t_n_4_x'),
+      y = variables.new_expression('AP_ACADO_TRAJ_r_n2t_n_4_y'),
+      z = variables.new_expression('AP_ACADO_TRAJ_r_n2t_n_4_z'),
+      color=colors.pink,
+      length=600
+    ))
 
 
     #self.add(Logo(ned))
     
-    self.add(Circle(diskframe,radius=variables.new_expression('AP_DISK_radius')))
