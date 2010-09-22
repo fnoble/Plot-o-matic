@@ -51,6 +51,8 @@ class Plot(Viewer):
   scroll_width = Float(300)
   
   legend = Bool(False)
+  
+  index_range = DelegatesTo('plot')
 
   _lock = t.Lock()
     
@@ -59,6 +61,7 @@ class Plot(Viewer):
     Item(label = 'Use commas\nfor multi-line plots.'),
     Item(name = 'legend', label = 'Show legend'),
     VGroup(
+      Item(name = 'index_range', label = 'Index range', editor = InstanceEditor()),
       Item(name = 'x_expr', label = 'Expression', style = 'custom'),
       HGroup(
         Item(name = 'x_max', label = 'Max'),
