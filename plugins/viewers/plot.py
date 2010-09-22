@@ -10,6 +10,7 @@ from viewers import Viewer
 from variables import Expression
 
 import threading as t
+import numpy
 
 """
 colours_list = [
@@ -166,8 +167,8 @@ class Plot(Viewer):
           self.y_exprs[n] = self.variables.new_expression('0.5')
         ys = self.y_exprs[n].get_array()
         self.plot_data.set_data(str(n), ys)
-        self.plot_data.set_data('x', range(len(ys)))
-        self.plot.plot(('x', str(n)), name = str(n), style='line', color='auto')
+        #self.plot_data.set_data('x', range(len(ys)))
+        self.plot.plot(str(n), name = str(n), style='line', color='auto')
       self._lock.release()
       #print "XXXXXXXXXXX: upd y7"
       self.update()
@@ -202,19 +203,21 @@ class Plot(Viewer):
     return (y_min, y_max)
 
   def update(self):
-    #print "XXXXXXXXXXX: u1"
+    print "XXXXXXXXXXX: u1"
     self._lock.acquire()
     if self.plot:
+      ys = numpy.array([])
+      last = self.variables.sample_number
       for n, expr in enumerate(self.y_exprs):
-        ys = self.y_exprs[n].get_array()
-        xs = range(len(ys))
-        #print "XXXXXXXXXXX: u5"
+        ys = self.y_exprs[n].get_array(last = last)
+        print "XXXXXXXXXXX: u3"
         self.plot_data.set_data(str(n), ys)
-        #print "XXXXXXXXXXX: u5-2"
-        self.plot_data.set_data('x', xs)
-      #print "XXXXXXXXXXX: u6"
-      GUI.invoke_later(self.plot.request_redraw)
+        print "XXXXXXXXXXX: u4"
+      print "XXXXXXXXXXX: u5"
+      #self.plot_data.set_data('x', numpy.arange(len(ys)))
+      print "XXXXXXXXXXX: u6"
+      self.plot.request_redraw()
     self._lock.release()
-    #print "XXXXXXXXXXX: u7"
+    print "XXXXXXXXXXX: u7"
 
 
