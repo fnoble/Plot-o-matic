@@ -167,8 +167,8 @@ class Plot(Viewer):
           self.y_exprs[n] = self.variables.new_expression('0.5')
         ys = self.y_exprs[n].get_array()
         self.plot_data.set_data(str(n), ys)
-        #self.plot_data.set_data('x', range(len(ys)))
-        self.plot.plot(str(n), name = str(n), style='line', color='auto')
+        self.plot_data.set_data('x', range(len(ys)))
+        self.plot.plot(('x', str(n)), name = str(n), style='line', color='auto')
       self._lock.release()
       #print "XXXXXXXXXXX: upd y7"
       self.update()
@@ -214,7 +214,7 @@ class Plot(Viewer):
         self.plot_data.set_data(str(n), ys)
         print "XXXXXXXXXXX: u4"
       print "XXXXXXXXXXX: u5"
-      #self.plot_data.set_data('x', numpy.arange(len(ys)))
+      self.plot_data.set_data('x', numpy.arange(len(ys)))
       print "XXXXXXXXXXX: u6"
       self.plot.request_redraw()
     self._lock.release()
