@@ -6,7 +6,12 @@ import time
 import math, numpy
 import cPickle as pickle
 
-expression_context = {}
+def bound(a, max):
+  if abs(a) > max:
+    a = 0
+  return a
+
+expression_context = {'bound': bound}
 expression_context.update(numpy.__dict__)
 
 
