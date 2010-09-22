@@ -121,6 +121,7 @@ class PlotOMaticHandler(Controller):
   add_decoder_actions_menu = Instance(Menu)
 
   remove_viewer_action = Action(name='Remove', action='handler.remove_viewer(editor,object)')
+  open_viewer_in_window_action = Action(name='Open in new window', action='handler.open_viewer_in_window(editor,object)')
   add_viewer_actions_menu = Instance(Menu)
 
   refresh_tree_action = Action(name='Refresh', action='handler.refresh_tree(editor)')
@@ -186,6 +187,9 @@ class PlotOMaticHandler(Controller):
     object.viewers_instance._add_viewer(new_viewer)
     editor.update_editor()
 
+  def open_viewer_in_window(self, editor, viewer):
+    viewers = editor._menu_parent_object.viewers_instance
+    viewers.open_viewer_in_window(viewer)
 
 class PlotOMatic(HasTraits):
   io_driver_list = Instance(IODriverList)
@@ -199,7 +203,11 @@ class PlotOMatic(HasTraits):
     node_for  = [Viewer],
     auto_open = True,
     label     = 'name',
-    menu      = Menu( handler.remove_viewer_action ),
+    menu      = Menu(
+      handler.open_viewer_in_window_action,
+      handler.remove_viewer_action,
+      handler.refresh_tree_action
+    ),
     icon_path = 'icons/',
     icon_item = 'plot.png'
   )
@@ -212,8 +220,8 @@ class PlotOMatic(HasTraits):
         children  = 'io_drivers',
         label     = '=Input Drivers',
         menu      = Menu(
-          handler.refresh_tree_action,
-          handler.add_io_driver_actions_menu
+          handler.add_io_driver_actions_menu,
+          handler.refresh_tree_action
         ),
         view      = View(),
       ),
@@ -225,8 +233,8 @@ class PlotOMatic(HasTraits):
         add       = [DataDecoder],
         menu      = Menu(
           handler.remove_io_driver_action,
-          handler.refresh_tree_action,
-          handler.add_decoder_actions_menu
+          handler.add_decoder_actions_menu,
+          handler.refresh_tree_action
         ),
         icon_path = 'icons/',
         icon_open = 'input.png',
@@ -238,8 +246,8 @@ class PlotOMatic(HasTraits):
         children  = '',
         label     = 'name',
         menu      = Menu(
-          handler.refresh_tree_action,
-          handler.remove_decoder_action
+          handler.remove_decoder_action,
+          handler.refresh_tree_action
         ),
         icon_path = 'icons/',
         icon_item = 'decoder.png'
@@ -250,8 +258,8 @@ class PlotOMatic(HasTraits):
         children  = 'viewers',
         label     = '=Viewers',
         menu      = Menu(
-          handler.refresh_tree_action,
-          handler.add_viewer_actions_menu
+          handler.add_viewer_actions_menu,
+          handler.refresh_tree_action
         ),
         view      = View()
       ),
@@ -304,8 +312,7 @@ class PlotOMatic(HasTraits):
     self.viewer_node.on_select = self.click_viewer
     
   def click_viewer(self, viewer):
-    self.selected_viewer = viewer
-    self.viewers.select_viewer(viewer)
+    self.selected_viewer = self.viewers.select_viewer(viewer)
 
   def start(self):
     self.io_driver_list.start_all()
