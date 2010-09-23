@@ -36,15 +36,13 @@ class TVTKViewer(Viewer):
     title = 'Viewer'
   )
 
-  def __init__(self,config=None):
-    Viewer.__init__(self)
-    self.config=config
-
   def start(self):
+    from plotconfig import TVTKconfig
+    self.config = TVTKconfig(self.variables)
+
     self.primitives=self.config.getPrimitives()
     for prim in self.primitives:
     	self.scene.add_actors(prim.actor)
-    pass
 
   def stop(self):
     pass

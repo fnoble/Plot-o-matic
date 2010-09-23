@@ -126,6 +126,11 @@ class PlotOMaticHandler(Controller):
   remove_viewer_action = Action(name='Remove', action='handler.remove_viewer(editor,object)')
   add_viewer_actions_menu = Instance(Menu)
 
+  refresh_tree_action = Action(name='Refresh', action='handler.refresh_tree(editor)')
+
+  def refresh_tree(self, editor):
+    editor.update_editor()
+
   def _add_io_driver_actions_menu_default(self):
     actions = []
     for io_driver_plugin in find_io_driver_plugins():
@@ -209,7 +214,10 @@ class PlotOMatic(HasTraits):
         auto_open = True,
         children  = 'io_drivers',
         label     = '=Input Drivers',
-        menu      = Menu( handler.add_io_driver_actions_menu ),
+        menu      = Menu(
+          handler.refresh_tree_action,
+          handler.add_io_driver_actions_menu
+        ),
         view      = View(),
       ),
       TreeNode( 
@@ -220,6 +228,7 @@ class PlotOMatic(HasTraits):
         add       = [DataDecoder],
         menu      = Menu(
           handler.remove_io_driver_action,
+          handler.refresh_tree_action,
           handler.add_decoder_actions_menu
         ),
         icon_path = 'icons/',
@@ -231,7 +240,10 @@ class PlotOMatic(HasTraits):
         auto_open = True,
         children  = '',
         label     = 'name',
-        menu      = Menu( handler.remove_decoder_action ),
+        menu      = Menu(
+          handler.refresh_tree_action,
+          handler.remove_decoder_action
+        ),
         icon_path = 'icons/',
         icon_item = 'decoder.png'
       ),
@@ -240,7 +252,10 @@ class PlotOMatic(HasTraits):
         auto_open = True,
         children  = 'viewers',
         label     = '=Viewers',
-        menu      = Menu( handler.add_viewer_actions_menu ),
+        menu      = Menu(
+          handler.refresh_tree_action,
+          handler.add_viewer_actions_menu
+        ),
         view      = View()
       ),
       viewer_node
@@ -310,16 +325,18 @@ class PlotOMatic(HasTraits):
     return config
 
   def set_config(self, config):
-    self.io_driver_list.set_config(config['io_drivers'])
-    self.viewers.set_config(config['viewers'])
+    if 'io_drivers' in config:
+      self.io_driver_list.set_config(config['io_drivers'])
+    if 'viewers' in config:
+      self.viewers.set_config(config['viewers'])
     self.variables.clear()
 
 vs = Variables()
 viewers = Viewers(variables = vs)
 
+
 iodl = IODriverList(variables = vs, viewers_instance = viewers)
 proj = PlotOMatic(io_driver_list = iodl, variables = vs, viewers = viewers)
-  
 
 proj.start()
 proj.configure_traits()
