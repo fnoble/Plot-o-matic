@@ -54,6 +54,7 @@ class Plot(Viewer):
   legend = Bool(False)
   
   index_range = DelegatesTo('plot')
+  value_range = DelegatesTo('plot')
 
   _lock = t.Lock()
     
@@ -80,6 +81,7 @@ class Plot(Viewer):
       label = 'X', show_border = True
     ),
     VGroup(
+      Item(name = 'value_range', label = 'Value range', editor = InstanceEditor()),
       Item(name = 'y_exprs', label = 'Expression(s)', style = 'custom', editor=ListEditor(style = 'custom')),
       HGroup(
         Item(name = 'y_max', label = 'Max'),
@@ -203,21 +205,21 @@ class Plot(Viewer):
     return (y_min, y_max)
 
   def update(self):
-    print "XXXXXXXXXXX: u1"
+    #print "XXXXXXXXXXX: u1"
     self._lock.acquire()
     if self.plot:
       ys = numpy.array([])
       last = self.variables.sample_number
       for n, expr in enumerate(self.y_exprs):
         ys = self.y_exprs[n].get_array(last = last)
-        print "XXXXXXXXXXX: u3"
+        #print "XXXXXXXXXXX: u3"
         self.plot_data.set_data(str(n), ys)
-        print "XXXXXXXXXXX: u4"
-      print "XXXXXXXXXXX: u5"
+        #print "XXXXXXXXXXX: u4"
+      #print "XXXXXXXXXXX: u5"
       self.plot_data.set_data('x', numpy.arange(len(ys)))
-      print "XXXXXXXXXXX: u6"
+      #print "XXXXXXXXXXX: u6"
       self.plot.request_redraw()
     self._lock.release()
-    print "XXXXXXXXXXX: u7"
+    #print "XXXXXXXXXXX: u7"
 
 
