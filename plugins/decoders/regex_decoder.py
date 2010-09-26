@@ -1,5 +1,5 @@
 from enthought.traits.api import Str
-from enthought.traits.ui.api import View, Item
+from enthought.traits.ui.api import View, Item, TextEditor
 from data_decoder import DataDecoder
 import re
 
@@ -9,9 +9,9 @@ class RegexDecoder(DataDecoder):
   """
   name = Str('Regex Decoder')
   view = View(
-    Item(name = 'regex', label='Regex'),
+    Item(name = 'regex', label='Regex', editor=TextEditor(enter_set=True, auto_set=False)),
     Item(label= "Each subgroup in the regex is \nassigned to a variable \nin the list in order."),
-    Item(name = 'variable_names', label='Group names'),
+    Item(name = 'variable_names', label='Group names', editor=TextEditor(enter_set=True, auto_set=False)),
     Item(label= "(use '_' to ignore a subgroup)"),
     title='Regex decoder'
   )
