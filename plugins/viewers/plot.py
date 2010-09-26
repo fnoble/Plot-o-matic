@@ -55,8 +55,6 @@ class Plot(Viewer):
   
   index_range = DelegatesTo('plot')
 
-  _lock = t.Lock()
-    
   traits_view = View(
     Item(name = 'name', label = 'Plot name'),
     Item(label = 'Use commas\nfor multi-line plots.'),
@@ -109,19 +107,19 @@ class Plot(Viewer):
   def update_name(self, new_name):
     if self.plot:
       self.plot.title = new_name
-      GUI.invoke_later(self.plot.request_redraw)
+      #GUI.invoke_later(self.plot.request_redraw)
 
   @on_trait_change('x_label')
   def update_x_label(self, new_name):
     if self.plot:
       self.plot.index_axis.title = new_name
-      GUI.invoke_later(self.plot.request_redraw)
+      #GUI.invoke_later(self.plot.request_redraw)
     
   @on_trait_change('y_label')
   def update_y_label(self, new_name):
     if self.plot:
       self.plot.value_axis.title = new_name
-      GUI.invoke_later(self.plot.request_redraw)
+      #GUI.invoke_later(self.plot.request_redraw)
 
   def start(self):
     self.plot = chaco.Plot(self.plot_data, title=self.name, auto_colors=colours_list)
@@ -155,9 +153,7 @@ class Plot(Viewer):
 
   @on_trait_change('y_exprs')
   def update_y_exprs(self):
-    #print "XXXXXXXXXXX: upd y1"
     if self.plot:
-      self._lock.acquire()
       if self.plot.plots:
         for plot in list(self.plot.plots.iterkeys()):
           self.plot.delplot(plot)
@@ -169,10 +165,7 @@ class Plot(Viewer):
         self.plot_data.set_data(str(n), ys)
         self.plot_data.set_data('x', range(len(ys)))
         self.plot.plot(('x', str(n)), name = str(n), style='line', color='auto')
-      self._lock.release()
-      #print "XXXXXXXXXXX: upd y7"
-      self.update()
-      #print "XXXXXXXXXXX: upd y8"
+      #self.update()
 
   @on_trait_change('x_expr')
   def update_x_expr(self):
@@ -203,21 +196,13 @@ class Plot(Viewer):
     return (y_min, y_max)
 
   def update(self):
-    print "XXXXXXXXXXX: u1"
-    self._lock.acquire()
     if self.plot:
       ys = numpy.array([])
       last = self.variables.sample_number
       for n, expr in enumerate(self.y_exprs):
         ys = self.y_exprs[n].get_array(last = last)
-        print "XXXXXXXXXXX: u3"
         self.plot_data.set_data(str(n), ys)
-        print "XXXXXXXXXXX: u4"
-      print "XXXXXXXXXXX: u5"
       self.plot_data.set_data('x', numpy.arange(len(ys)))
-      print "XXXXXXXXXXX: u6"
-      self.plot.request_redraw()
-    self._lock.release()
-    print "XXXXXXXXXXX: u7"
+      #GUI.invoke_later(self.plot.request_redraw())
 
 
