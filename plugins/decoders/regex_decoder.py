@@ -12,7 +12,7 @@ class RegexDecoder(DataDecoder):
     Item(name = 'regex', label='Regex', editor=TextEditor(enter_set=True, auto_set=False)),
     Item(label= "Each subgroup in the regex is \nassigned to a variable \nin the list in order."),
     Item(name = 'variable_names', label='Group names', editor=TextEditor(enter_set=True, auto_set=False)),
-    Item(label= "(use '_' to ignore a subgroup)"),
+    Item(label= "(comma separated, use '_' to ignore a subgroup)"),
     title='Regex decoder'
   )
   regex = Str()
