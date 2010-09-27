@@ -37,6 +37,7 @@ class TVTKViewer(Viewer):
   )
 
   def start(self):
+    #from plotconfig_simulator import TVTKconfig
     from plotconfig import TVTKconfig
     self.config = TVTKconfig(self.variables)
 
