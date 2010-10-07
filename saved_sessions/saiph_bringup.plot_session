@@ -1,0 +1,146 @@
+io_drivers:
+- UDPDriver:
+    buffer_size: 10
+    decoders:
+    - JobySimDecoder:
+        name: JobySim Decoder
+    filter_addr: ''
+    filter_by_addr: false
+    ip: 0.0.0.0
+    name: UDP Driver
+    port: 5000
+    show_debug_msgs: false
+    timeout: 1.0
+viewers:
+- TVTKViewer:
+    name: TVTK Viewer
+    refresh_rate: 30.0
+- Plot:
+    expressions:
+    - !!python/unicode 'pa_motRPM_0_'
+    - !!python/unicode 'pa_motRPM_1_'
+    - !!python/unicode 'pa_motRPM_2_'
+    - !!python/unicode 'pa_motRPM_3_'
+    - pa_motRPM_4_
+    - pa_motRPM_5_
+    - pa_motRPM_6_
+    - pa_motRPM_7_
+    name: !!python/unicode 'phys_act_motors'
+    x_label: ''
+    y_label: ''
+- Plot:
+    expressions:
+    - pa_surf_0_*180/pi
+    - pa_surf_1_*180/pi
+    - pa_surf_2_*180/pi
+    - pa_surf_3_*180/pi
+    name: !!python/unicode 'phys_act_surfs'
+    x_label: ''
+    y_label: ''
+- Plot:
+    expressions:
+    - !!python/unicode 'e2uTrue_ae2u_alpha*180/pi'
+    - !!python/unicode 'o2i_alpha*180/pi'
+    - !!python/unicode 'i2pa_wDot_y'
+    name: !!python/unicode 'commanded vs actual alpha'
+    x_label: ''
+    y_label: ''
+- Plot:
+    expressions:
+    - !!python/unicode 'e2uTrue_ae2u_beta*180/pi'
+    - !!python/unicode 'o2i_beta*180/pi'
+    - !!python/unicode '-i2pa_wDot_z'
+    name: !!python/unicode 'commanded vs actual beta'
+    x_label: ''
+    y_label: ''
+- Plot:
+    expressions:
+    - !!python/unicode 'o2i_roll_est*180/pi'
+    - !!python/unicode 'o2i_roll*180/pi'
+    - !!python/unicode 'i2pa_wDot_x*0'
+    name: !!python/unicode 'commanded vs actual roll'
+    x_label: ''
+    y_label: ''
+- Plot:
+    expressions:
+    - !!python/unicode 'e2uTrue_ae2u_v_I'
+    - o2i_v_I
+    - !!python/unicode 'i2pa_thrust*0'
+    name: !!python/unicode 'commanded vs actual airspeed'
+    x_label: ''
+    y_label: ''
+- Plot:
+    expressions:
+    - !!python/unicode 'fm_mAirframe_y'
+    - !!python/unicode 'fm_mThrusts_y'
+    name: !!python/unicode 'fm_y'
+    x_label: ''
+    y_label: ''
+- Plot:
+    expressions:
+    - !!python/unicode 'fm_mThrusts_y'
+    - !!python/unicode 'i2pa_wDot_y*35'
+    name: !!python/unicode 'commanded vs actual y torque'
+    x_label: ''
+    y_label: !!python/unicode ''
+- Plot:
+    expressions:
+    - nm_commanded_x
+    - nm_surfaces_x
+    name: !!python/unicode 'nm_x'
+    x_label: ''
+    y_label: ''
+- Plot:
+    expressions:
+    - nm_commanded_y
+    - nm_surfaces_y
+    name: !!python/unicode 'nm_y'
+    x_label: ''
+    y_label: ''
+- Plot:
+    expressions:
+    - nm_commanded_z
+    - nm_surfaces_z
+    name: !!python/unicode 'nm_z'
+    x_label: ''
+    y_label: ''
+- Plot:
+    expressions:
+    - !!python/unicode '(-pa_motRPM_0_ - pa_motRPM_1_ - pa_motRPM_2_ - pa_motRPM_3_
+      + pa_motRPM_4_ + pa_motRPM_5_ + pa_motRPM_6_ + pa_motRPM_7_)*.8'
+    - nm_remaining_y
+    name: !!python/unicode 'motor "torque" vs motor torque'
+    x_label: ''
+    y_label: ''
+- Plot:
+    expressions:
+    - fm_fAirframe_x
+    - !!python/unicode 'fm_fThrusts_x'
+    name: !!python/unicode 'x forces'
+    x_label: ''
+    y_label: ''
+- Plot:
+    expressions:
+    - !!python/unicode '(e2uTrue_ae2u_alpha-o2i_alpha)*180/pi'
+    name: !!python/unicode 'alpha_error'
+    x_label: ''
+    y_label: ''
+- Plot:
+    expressions:
+    - !!python/unicode 'pe_harvested_power*0.001*.65'
+    name: !!python/unicode 'power (kW)'
+    x_label: ''
+    y_label: ''
+- Plot:
+    expressions:
+    - !!python/unicode 'pa_motRPM_0_*e2uTrue_ae2u_v_I*.001'
+    - !!python/unicode 'pa_motRPM_1_*e2uTrue_ae2u_v_I*.001'
+    - !!python/unicode 'pa_motRPM_2_*e2uTrue_ae2u_v_I*.001'
+    - !!python/unicode 'pa_motRPM_3_*e2uTrue_ae2u_v_I*.001'
+    - !!python/unicode 'pa_motRPM_4_*e2uTrue_ae2u_v_I*.001'
+    - !!python/unicode 'pa_motRPM_5_*e2uTrue_ae2u_v_I*.001'
+    - !!python/unicode 'pa_motRPM_6_*e2uTrue_ae2u_v_I*.001'
+    - !!python/unicode 'pa_motRPM_7_*e2uTrue_ae2u_v_I*.001'
+    name: !!python/unicode 'power per motor (kW)'
+    x_label: ''
+    y_label: ''

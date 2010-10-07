@@ -1,4 +1,4 @@
 *.pyc
 *.orig
 *.plot_data
-*.plot_session
+saved_sessions/
