@@ -33,9 +33,13 @@ class TVTKconfig(PrimitiveCollection):
     #self.add(Text(w,text='Plot-o-matic goes TVTK!'))
     ned=Frame(w,'TRx(pi)',name="North East Down");
     diskframe=Frame(ned,'tr(AP_DISK_r_n2d_n_x,AP_DISK_r_n2d_n_y,AP_DISK_r_n2d_n_z)*quat(AP_DISK_q_n2d_q0,AP_DISK_q_n2d_q1,AP_DISK_q_n2d_q2,AP_DISK_q_n2d_q3)',name="diskframe")
-    orientation=Frame(ned,'tr(-50,-50,0)*quat(AP_EST2USER_0_q_n2b_q0,AP_EST2USER_0_q_n2b_q1,AP_EST2USER_0_q_n2b_q2,AP_EST2USER_0_q_n2b_q3)')
-    airframe=Frame(ned,'tr(AP_EST2USER_0_r_n2b_n_x,AP_EST2USER_0_r_n2b_n_y,AP_EST2USER_0_r_n2b_n_z)*quat(AP_EST2USER_0_q_n2b_q0,AP_EST2USER_0_q_n2b_q1,AP_EST2USER_0_q_n2b_q2,AP_EST2USER_0_q_n2b_q3)')
+    #orientation=Frame(ned,'tr(-50,-50,0)*quat(AP_EST2USER_0_q_n2b_q0,AP_EST2USER_0_q_n2b_q1,AP_EST2USER_0_q_n2b_q2,AP_EST2USER_0_q_n2b_q3)')
+    #airframe=Frame(ned,'tr(AP_EST2USER_0_r_n2b_n_x,AP_EST2USER_0_r_n2b_n_y,AP_EST2USER_0_r_n2b_n_z)*quat(AP_EST2USER_0_q_n2b_q0,AP_EST2USER_0_q_n2b_q1,AP_EST2USER_0_q_n2b_q2,AP_EST2USER_0_q_n2b_q3)')
     #airframe_gps=Frame(ned,'tr(HENRY_GNSS_North,HENRY_GNSS_East,HENRY_GNSS_Down)*quat(AP_EST2USER_0_q_n2b_q0,AP_EST2USER_0_q_n2b_q1,AP_EST2USER_0_q_n2b_q2,AP_EST2USER_0_q_n2b_q3)')
+    
+    # for the sim
+    orientation=Frame(ned,'tr(-50,-50,0)*quat(e2uTrue_x_q_n2b_q0,e2uTrue_x_q_n2b_q1,e2uTrue_x_q_n2b_q2,e2uTrue_x_q_n2b_q3)')
+    airframe=Frame(ned,'tr(e2uTrue_x_r_n2b_n_x,e2uTrue_x_r_n2b_n_y,e2uTrue_x_r_n2b_n_z)*quat(e2uTrue_x_q_n2b_q0,e2uTrue_x_q_n2b_q1,e2uTrue_x_q_n2b_q2,e2uTrue_x_q_n2b_q3)')
 
     ax=Frame(ned,'sc(50)')
     self.add(Arrow(ax,color=colors.red))
