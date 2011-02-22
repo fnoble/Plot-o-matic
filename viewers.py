@@ -54,6 +54,7 @@ class Viewers(HasTraits, t.Thread):
   viewers = List(Viewer)
   variables = Instance(Variables) # Variables instance to provide the data context for all of our viewers
   selected_viewer = Instance(Viewer)
+  viewers_in_windows = List(Instance(Viewer))
   name = Str('Viewers') # for thread debugging
   _wants_to_terminate = Bool(False)
   
@@ -69,6 +70,12 @@ class Viewers(HasTraits, t.Thread):
   def run(self):
     """ Thread to update viewers. """
     while not self._wants_to_terminate:
+      for viewer in self.viewers_in_windows:
+        try:
+          viewer.update()
+        except Exception as e:
+          print "Exception in viewer '%s':" % viewer.name, e
+        time.sleep(1.0/viewer.refresh_rate)
       if self.selected_viewer:
         try:
           self.selected_viewer.update()
@@ -80,9 +87,19 @@ class Viewers(HasTraits, t.Thread):
     self._stopped()
   
   def select_viewer(self, viewer):
-    if self.selected_viewer:
-      self.selected_viewer.hide()
-    self.selected_viewer = viewer
+    if not viewer in self.viewers_in_windows:
+      if self.selected_viewer:
+        self.selected_viewer.hide()
+      self.selected_viewer = viewer
+      viewer.show()
+    else:
+      print "viewer open in window"
+    return self.selected_viewer
+
+  def open_viewer_in_window(self, viewer):
+    self.viewers_in_windows.append(viewer)
+    print "opening in window"
+    viewer.edit_traits(view = 'view')
     viewer.show()
     
   def stop(self):

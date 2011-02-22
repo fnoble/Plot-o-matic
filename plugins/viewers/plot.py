@@ -26,12 +26,35 @@ colours_list = [
 """
 colours_list = ['red', 'blue', 'green']
 
+class MyPlotData(chaco.ArrayPlotData):
+  def set_data(self, name, new_data, generate_name=False, do_update=True):
+      if generate_name:
+          # Find all 'series*' and increment
+          candidates = [n[6:] for n in self.arrays.keys() if n.startswith('series')]
+          max_int = 0
+          for c in candidates:
+              try:
+                  if int(c) > max_int:
+                      max_int = int(c)
+              except ValueError:
+                  pass
+          name = "series%d" % (max_int + 1)
+
+      self.arrays[name] = new_data
+      if do_update:
+        event = {}
+        if name in self.arrays:
+            event['changed'] = [name]
+        else:
+            event['added'] = [name]
+        self.data_changed = event
+      return name
 
 class Plot(Viewer):
   name = Str('Plot')
 
   plot = Instance(chaco.Plot)
-  plot_data = Instance(chaco.ArrayPlotData, ())
+  plot_data = Instance(MyPlotData, ())
   
   y_exprs = List(Instance(Expression))
   x_expr = Instance(Expression)
@@ -54,6 +77,7 @@ class Plot(Viewer):
   legend = Bool(False)
   
   index_range = DelegatesTo('plot')
+  value_range = DelegatesTo('plot')
 
   traits_view = View(
     Item(name = 'name', label = 'Plot name'),
@@ -78,6 +102,7 @@ class Plot(Viewer):
       label = 'X', show_border = True
     ),
     VGroup(
+      Item(name = 'value_range', label = 'Value range', editor = InstanceEditor()),
       Item(name = 'y_exprs', label = 'Expression(s)', style = 'custom', editor=ListEditor(style = 'custom')),
       HGroup(
         Item(name = 'y_max', label = 'Max'),
@@ -197,12 +222,10 @@ class Plot(Viewer):
 
   def update(self):
     if self.plot:
-      ys = numpy.array([])
       last = self.variables.sample_number
-      for n, expr in enumerate(self.y_exprs):
-        ys = self.y_exprs[n].get_array(last = last)
+      yss = [y_expr.get_array(last = last) for y_expr in self.y_exprs]
+      self.plot_data.set_data('x', numpy.arange(len(yss[0])))
+      for n, ys in enumerate(yss):
         self.plot_data.set_data(str(n), ys)
-      self.plot_data.set_data('x', numpy.arange(len(ys)))
-      #GUI.invoke_later(self.plot.request_redraw())
 
 
