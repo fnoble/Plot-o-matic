@@ -54,6 +54,7 @@ class Plot(Viewer):
   name = Str('Plot')
 
   plot = Instance(chaco.Plot)
+  legend = Instance(chaco.Legend)  
   plot_data = Instance(MyPlotData, ())
   
   y_exprs = List(Instance(Expression))
@@ -74,7 +75,7 @@ class Plot(Viewer):
   scroll = Bool(True)
   scroll_width = Float(300)
   
-  legend = Bool(False)
+  #legend = Bool(False)
   
   index_range = DelegatesTo('plot')
   value_range = DelegatesTo('plot')
@@ -149,9 +150,10 @@ class Plot(Viewer):
   def start(self):
     self.plot = chaco.Plot(self.plot_data, title=self.name, auto_colors=colours_list)
     self.plot.value_range.tight_bounds = False
-    #legend = chaco.Legend(component=self.plot, padding=10, align="ul")
-    #legend.tools.append(LegendTool(legend, drag_button="right"))
-    #self.plot.overlays.append(legend)
+    self.legend = chaco.Legend(component=self.plot, padding=10, align="ul")
+    self.legend.tools.append(LegendTool(self.legend, drag_button="right"))
+    self.plot.overlays.append(self.legend)
+    self.legend.plots = self.plot.plots
     #self.y_exprs += [self.variables.new_expression('a')]
     #self.x_expr = self.variables.new_expression('i')
     self.update_y_exprs()
@@ -189,8 +191,9 @@ class Plot(Viewer):
         ys = self.y_exprs[n].get_array()
         self.plot_data.set_data(str(n), ys)
         self.plot_data.set_data('x', range(len(ys)))
-        self.plot.plot(('x', str(n)), name = str(n), style='line', color='auto')
+        self.plot.plot(('x', str(n)), name = self.y_exprs[n]._expr, style='line', color='auto')
       #self.update()
+      self.legend.plots = self.plot.plots
 
   @on_trait_change('x_expr')
   def update_x_expr(self):
