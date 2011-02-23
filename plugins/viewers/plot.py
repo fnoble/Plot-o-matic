@@ -221,6 +221,10 @@ class Plot(Viewer):
     return (y_min, y_max)
 
   def update(self):
+    from enthought.pyface.api import GUI
+    GUI.invoke_later(self.update_unsafe)
+
+  def update_unsafe(self):
     if self.plot:
       last = self.variables.sample_number
       yss = [y_expr.get_array(last = last) for y_expr in self.y_exprs]
