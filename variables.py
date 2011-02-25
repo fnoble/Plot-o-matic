@@ -173,7 +173,6 @@ class Variables(HasTraits):
 
     first, last = self.bound_array(first, last)
     vars_list_offset = self.sample_number - self.sample_count
-    print vars_list_offset, first, last, self.sample_number, self.sample_count
     if expr in self.vars_pool:
       data = [vs.get(expr) for vs in self.vars_list[first-vars_list_offset:last-vars_list_offset]]
     else:
@@ -228,7 +227,6 @@ class Expression(HasTraits):
     if last > self._data_array_cache_index:
       #print "Cache miss of", (last - self._data_array_cache_index)
       new_data = self._vars._get_array(self._expr, self._data_array_cache_index, last)
-      print new_data
 
       new_shape = list(new_data.shape)
       new_shape[0] = -1 # -1 lets the first index resize appropriately for the data length
