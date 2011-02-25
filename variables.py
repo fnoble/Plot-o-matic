@@ -177,10 +177,12 @@ class Variables(HasTraits):
     """
 
     first, last = self.bound_array(first, last)
+    vars_list_offset = self.sample_number - self.sample_count
+    print vars_list_offset, first, last, self.sample_number, self.sample_count
     if expr in self.vars_pool:
-      data = [vs.get(expr) for vs in self.vars_list[first:last]]
+      data = [vs.get(expr) for vs in self.vars_list[first-vars_list_offset:last-vars_list_offset]]
     else:
-      data = [self._eval_expr(expr, vs) for vs in self.vars_list[first:last]]
+      data = [self._eval_expr(expr, vs) for vs in self.vars_list[first-vars_list_offset:last-vars_list_offset]]
     data = [0.0 if d is None else d for d in data]
     
     data_array = numpy.array(data)
@@ -231,6 +233,7 @@ class Expression(HasTraits):
     if last > self._data_array_cache_index:
       #print "Cache miss of", (last - self._data_array_cache_index)
       new_data = self._vars._get_array(self._expr, self._data_array_cache_index, last)
+      print new_data
 
       new_shape = list(new_data.shape)
       new_shape[0] = -1 # -1 lets the first index resize appropriately for the data length
@@ -238,6 +241,8 @@ class Expression(HasTraits):
       self._data_array_cache = numpy.append(self._data_array_cache, new_data)
       self._data_array_cache.shape = new_shape
       self._data_array_cache_index = last
-
+      # use the global max_samples to limit our cache size
+      self._data_array_cache = self._data_array_cache[-self._vars.max_samples:]
+  
     return self._data_array_cache[first:last]
 
