@@ -51,11 +51,18 @@ class IODriver(t.Thread, HasTraits):
         if data:
           self.pass_data(data)
       print "IO driver thread terminating:", self.name
-      self.close()
+      try:
+        self.close()       
+      except Exception as e:
+        print "Exception closing IO driver '%s':" % self.name, e
     
   def start(self):
     """ Used internally to start the thread for the input driver, if you have init code put it in open. """
-    self.open()
+    try:
+      self.open()        
+    except Exception as e:
+      print "Exception opening IO driver '%s':" % self.name, e
+      self.stop()
     t.Thread.start(self)
 
   def stop(self):
@@ -63,7 +70,10 @@ class IODriver(t.Thread, HasTraits):
     if self._use_thread:
       self._wants_to_terminate = True
     else:
-      self.close()
+      try:
+        self.close()       
+      except Exception as e:
+        print "Exception closing IO driver '%s':" % self.name, e
    
   def _add_decoder(self, decoder):
     """ Used internally to add decoders so they receive data from the input driver. """
