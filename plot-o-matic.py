@@ -33,7 +33,7 @@ if PROFILE:
   import yappi
   yappi.start(PROFILE_BUILTINS)
 
-def open_file(filter = '', dir = './', file_name = ''):
+def open_file(filter = '', dir = './saved_sessions', file_name = ''):
   dialog = wx.FileDialog(None, wildcard = filter, defaultFile = file_name, defaultDir = dir, style = wx.OPEN|wx.FILE_MUST_EXIST)
   file_name = ''
   if dialog.ShowModal() == wx.ID_OK:
@@ -41,7 +41,7 @@ def open_file(filter = '', dir = './', file_name = ''):
   dialog.Destroy()
   return file_name
 
-def save_file(filter = '', dir = './', file_name = ''):
+def save_file(filter = '', dir = './saved_sessions', file_name = ''):
   dialog = wx.FileDialog(None, wildcard = filter, defaultFile = file_name, defaultDir = dir, style = wx.SAVE|wx.OVERWRITE_PROMPT)
   filename = ''
   if dialog.ShowModal() == wx.ID_OK:
