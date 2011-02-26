@@ -1,9 +1,15 @@
 from enthought.traits.api import Str, Bool, Enum, List
 from enthought.traits.ui.api import View, Item
 from data_decoder import DataDecoder
-import re
+
+import os
+import sys
+
+from xml.etree import ElementTree as ET
+import xml.parsers.expat as expat
 
 class ConftronDecoder(DataDecoder):
+#class ConftronDecoder():
   """
       Conftron lcm class decoder
   """
@@ -13,44 +19,138 @@ class ConftronDecoder(DataDecoder):
     title='Conftron Decoder'
   )
   
-  _sub_re = re.compile('\W+')
   _names = List()
 
-  def decode(self, data):
+  def struct_of_xml(self, xml_struct):
+    struct = []
+    # get attributes for each member of the struct
+    for field in xml_struct.getchildren():
+      attributes = {}
+      attributes['name']=field.attrib['name']
+      attributes['type']=field.attrib['type']
+      try:
+        attributes['array']=eval("["+field.attrib['array']+"]")
+      except KeyError:
+        attributes['array']=None
+      try:
+        attributes['alt_unit']=field.attrib['alt_unit']
+      except KeyError:
+        attributes['alt_unit']=None
+      try:
+        attributes['alt_unit_coeff']=float(field.attrib['alt_unit_coeff'])
+      except KeyError:
+        attributes['alt_unit_coeff']=None
+      struct.append(attributes)
+    return struct
+
+
+  def __init__(self):
+
+    # set up paths
+    self.ap_project_root = os.environ.get('AP_PROJECT_ROOT')
+    if self.ap_project_root == None:
+      raise NameError("please set the AP_PROJECT_ROOT environment variable to use Conftron driver")
+    sys.path.append( self.ap_project_root+"/conftron/python" )
+
+    # parse types.xml
+    self.structs = {}
+    self.enums = []
+
+    for a_type in ET.ElementTree().parse( self.ap_project_root+"/conf/types.xml").getchildren():
+      # if it's a struct and we haven't seen it yet, parse it
+      if a_type.tag == "message" and a_type.attrib['name'] not in self.structs.keys():
+        self.structs[a_type.attrib['name']] = self.struct_of_xml(a_type)
+    
+      # if it's an enum, and we haven't seen it, parse it
+      elif a_type.tag == "enum" and a_type.attrib['name'] not in self.enums:
+        self.enums.append(a_type.attrib['name'])
+
+      # if it's a class, loop through the structs/enums and if we haven't seen it yet, parse it
+      elif a_type.tag == "class":
+        for a_class_type in a_type.getchildren():
+          if a_class_type.tag == "message" and a_class_type.attrib['name'] not in self.structs.keys():
+            self.structs[a_class_type.attrib['name']] = self.struct_of_xml(a_class_type)
+          elif a_class_type.tag == "enum" and a_class_type.attrib['name'] not in self.enums:
+            self.enums.append(a_class_type.attrib['name'])
+
+
+    # write the struct --> dict library
+    try:
+        os.mkdir(self.ap_project_root+"/conftron/plot-o-matic_autogen")
+    except OSError as (errno, strerror):
+        if strerror == "File exists":
+            pass
+
+    base_types = ['double', 'float', 'int8_t', 'int16_t', 'int32_t']
+
+    file = open(self.ap_project_root+"/conftron/plot-o-matic_autogen/dict_of_struct.py",'w')
+
+    # enums
+    for enum in self.enums:
+      file.write("\ndef "+enum+"(struct):   # enum\n")
+      file.write("  return struct.val\n")
+
+    # structs
+    for name,struct in self.structs.iteritems():
+      file.write("\ndef "+name+"(struct):\n")
+      file.write("  str_dict = {}\n")
+
+      for member in struct:
+        # base types
+        if member['type'] in base_types:
+          file.write("  str_dict[\'"+member['name']+"\'] = struct."+member['name']+"  # base type "+member['type']+"\n")          
+        
+        # non-base types
+        else:
+          # scalars
+          if member['array'] == None:
+            file.write("  str_dict[\'"+member['name']+"\'] = "+member['type']+"(struct."+member['name']+")\n")
+          # arrays
+          elif len(member['array']) == 1:
+            file.write("  str_dict[\'"+member['name']+"\'] = ["+member['type']+"(_hoochie_momma) for _hoochie_momma in struct."+member['name']+"] # non-base array\n")
+          # don't handle non-base type tensors of order 2 or higher
+          else:
+            print "Ignoring none-base type tensor:"
+            print member
+            file.write("  str_dict[\'"+member['name']+"\'] = None\n")
+      file.write("  return str_dict\n")
+
+    file.close()
+  
+    sys.path.append(self.ap_project_root+"/conftron/plot-o-matic_autogen")
+    import dict_of_struct
+
+  def decode(self, message):
     """
         Decodes input from Conftron/LCM messages.
     """
 
-    if len(data) > 0:
-      print "Conftron message queue grew larger than 1"
+    sys.path.append(self.ap_project_root+"/conftron/plot-o-matic_autogen")
 
-    print data
+    import dict_of_struct
+    amd = dict_of_struct.__dict__[message['type']](message['message'])
 
-#    print "decoding, yo"
-#    if data['channel'] == 'pose':
-#      print data
+    # re-enable this when pom can handle structs
+    #return {message['name']:amd}
 
-    return {'hi':0}
+    # for now flatten into a list
+    return self.awesome_multilayer_dict_to_boring_flat_dict(message['name'],amd)
 
-#      print self.messages[channel]['decoder'].decode(data)
-#      print msg
-#      print msg.r_n2b_n
-
-#      print msg.__class__
-#      for blah in msg:
-#        print blah
-
-
-#    if data[0] == '#':
-#      # list of names
-#      self._names = [self._sub_re.sub('_', name) for name in data[1:].split('!')]
-#      print "JobySimDecoder got names:", self._names
-#      return None
-#
-#    vals = map(eval, data.split('!'))
-#    d = dict(zip(self._names, vals))
-#    return d
-
-#    print data
+  def awesome_multilayer_dict_to_boring_flat_dict(self, top_name, amd):
+    bfd = {}
+    for name,entry in amd.iteritems():
+      if isinstance(entry, dict):
+        bfd.update(self.awesome_multilayer_dict_to_boring_flat_dict(top_name+"_"+name, entry))
+      elif isinstance(entry, list):
+        for k in range(0, len(entry)):
+          bfd.update(self.awesome_multilayer_dict_to_boring_flat_dict(top_name+"_"+name+"_"+str(k), entry[k]))
+      elif isinstance(entry, tuple):
+        for k in range(0, len(entry)):
+          bfd.update({top_name+"_"+str(k): entry[k]})
+      else:
+        bfd[top_name+"_"+name] = entry
+    return bfd
 
 
+if __name__ == '__main__':
+  cd = ConftronDecoder()

@@ -4,10 +4,9 @@ import sys
 import os
 from xml.etree import ElementTree as ET
 import xml.parsers.expat as expat
+from collections import deque
 
 from io_driver import IODriver
-
-import lcm
 
 class ConftronDriver(IODriver):
   """
@@ -35,7 +34,7 @@ class ConftronDriver(IODriver):
     self.queued_messages.append(to_decoder)
 
   def open(self):
-    self.queued_messages = []
+    self.queued_messages = deque([]) #fifo buffer
 
     # set up paths
     self.ap_project_root = os.environ.get('AP_PROJECT_ROOT')
@@ -44,6 +43,7 @@ class ConftronDriver(IODriver):
     sys.path.append( self.ap_project_root+"/conftron/python" )
 
     # create lcm instance
+    import lcm
     self.lc = lcm.LCM()
 
     # parse telemetry.xml
@@ -79,14 +79,24 @@ class ConftronDriver(IODriver):
     for msg in self.messages.values():
       self.lc.unsubscribe(msg['subscription'])
 
-  def receive(self):
-    self.lc.handle()
-
+  def pop_queue(self):
     # empty self.queued_messages
     if len(self.queued_messages) > 0:
-      qm = self.queued_messages
-      self.queued_messages = []
-      return qm
+      if len(self.queued_messages) > 10:
+        print "Conftron message queue length: "+str(len(self.queued_messages))
+      return self.queued_messages.popleft()
+    return None
+
+  def receive(self):
+    ret = self.pop_queue()
+    if ret != None:
+      return ret
+
+    self.lc.handle()
+
+    ret = self.pop_queue()
+    if ret != None:
+      return ret
 
 #  @on_trait_change('show_debug_messages')
 #  def change_port(self):
