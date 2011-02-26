@@ -3,14 +3,14 @@ from enthought.traits.ui.api import View, Item
 from data_decoder import DataDecoder
 import re
 
-class LcmDecoder(DataDecoder):
+class ConftronDecoder(DataDecoder):
   """
-      Decodes lines of text formatted using a simple format.
+      Conftron lcm class decoder
   """
-  name = Str('LCM Decoder')
+  name = Str('Conftron Decoder')
   
   view = View(
-    title='LCM Decoder'
+    title='Conftron Decoder'
   )
   
   _sub_re = re.compile('\W+')
@@ -18,8 +18,29 @@ class LcmDecoder(DataDecoder):
 
   def decode(self, data):
     """
-        Decodes input from LCM messages.
+        Decodes input from Conftron/LCM messages.
     """
+
+    if len(data) > 0:
+      print "Conftron message queue grew larger than 1"
+
+    print data
+
+#    print "decoding, yo"
+#    if data['channel'] == 'pose':
+#      print data
+
+    return {'hi':0}
+
+#      print self.messages[channel]['decoder'].decode(data)
+#      print msg
+#      print msg.r_n2b_n
+
+#      print msg.__class__
+#      for blah in msg:
+#        print blah
+
+
 #    if data[0] == '#':
 #      # list of names
 #      self._names = [self._sub_re.sub('_', name) for name in data[1:].split('!')]
@@ -31,6 +52,5 @@ class LcmDecoder(DataDecoder):
 #    return d
 
 #    print data
-    return data
 
-#    return {'hi':0}
+
