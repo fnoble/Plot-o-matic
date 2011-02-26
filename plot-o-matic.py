@@ -36,27 +36,50 @@ if PROFILE:
   import yappi
   yappi.start(PROFILE_BUILTINS)
 
-def open_file(filter = '', dir = './saved_sessions', file_name = ''):
-  dialog = wx.FileDialog(None, wildcard = filter, defaultFile = file_name, defaultDir = dir, style = wx.OPEN|wx.FILE_MUST_EXIST)
+def open_file(wildcard = '', dir = './saved_sessions', file_name = '', message = 'Open'):
+  dialog = wx.FileDialog(
+    None,
+    wildcard = wildcard,
+    defaultFile = file_name,
+    defaultDir = dir,
+    message = message,
+    style = wx.OPEN|wx.FILE_MUST_EXIST
+  )
   file_name = ''
   if dialog.ShowModal() == wx.ID_OK:
     file_name = dialog.GetPath()
   dialog.Destroy()
   return file_name
 
-def save_file(filter = '', dir = './saved_sessions', file_name = ''):
-  dialog = wx.FileDialog(None, wildcard = filter, defaultFile = file_name, defaultDir = dir, style = wx.SAVE|wx.OVERWRITE_PROMPT)
+def save_file(wildcard = '', dir = './saved_sessions', file_name = '', message = 'Save'):
+  dialog = wx.FileDialog(
+    None,
+    wildcard = wildcard,
+    defaultFile = file_name,
+    defaultDir = dir,
+    message = message,
+    style = wx.SAVE|wx.OVERWRITE_PROMPT
+  )
   filename = ''
+  
+  # take odd elements of the wildcard list and take the last part after the dot
+  extensions = [wc.split('.')[-1] for wc in wildcard.split('|')[1::2]]
+  # get rid of any '*'s i.e. no extension
+  extensions = ['' if e == '*' else e for e in extensions]
+  
   if dialog.ShowModal() == wx.ID_OK:
+    extension = extensions[dialog.GetFilterIndex()]
     filename = dialog.GetPath()
+    if filename.split('.')[-1] != extension and extension:
+      filename += '.' + extension
   dialog.Destroy()
   return filename
 
 class PlotOMaticHandler(Controller):
   # ------------ Menu related --------------------
   exit_action = Action(name='&Exit', action='exit')
-  save_session_action = Action(name='&Open Session', action='open_session')
-  open_session_action = Action(name='&Save Session', action='save_session')
+  save_session_action = Action(name='&Open Session', action='open_session', accelerator='Ctrl+O')
+  open_session_action = Action(name='&Save Session', action='save_session', accelerator='Ctrl+S')
 
   file_menu = Menu(
       exit_action,
@@ -70,16 +93,24 @@ class PlotOMaticHandler(Controller):
     print 'Exit called, really should implement this'
 
   def save_session(self, uii):
-    filename = save_file(filter = 'Plot-o-matic session (*.plot_session)|*.plot_session|All files (*)|*', file_name = 'my_session.plot_session')
+    filename = save_file(
+      wildcard = 'Plot-o-matic session (*.plot_session)|*.plot_session|All files (*)|*', 
+      file_name = 'my_session.plot_session',
+      message = 'Save session'
+    )
     if filename != '':
       print "Saving session as '%s'" % filename
       session = uii.object.get_config()
       fp = open(filename, 'w')
-      yaml.dump(session, fp, default_flow_style=False)
+      yaml.safe_dump(session, fp, default_flow_style=False)
       fp.close()
 
   def open_session(self, uii):
-    filename = open_file(filter = 'Plot-o-matic session (*.plot_session)|*.plot_session|All files (*)|*', file_name = 'my_session.plot_session')
+    filename = open_file(
+      wildcard = 'Plot-o-matic session (*.plot_session)|*.plot_session|All files (*)|*',
+      file_name = 'my_session.plot_session',
+      message = 'Open session'
+    )
     if filename != '':
       print "Opening session '%s'" % filename
       fp = open(filename, 'r')
@@ -87,9 +118,9 @@ class PlotOMaticHandler(Controller):
       fp.close()
       uii.object.set_config(session)
   
-  clear_data_action = Action(name = '&Clear Data', action='clear_data')
-  save_data_action = Action(name = '&Save Data Set', action='save_data')
-  open_data_action = Action(name = '&Open Data Set', action='open_data')
+  clear_data_action = Action(name = '&Clear Data', action='clear_data', accelerator='Ctrl+W')
+  save_data_action = Action(name = '&Save Data Set', action='save_data', accelerator='Ctrl+Shift+S')
+  open_data_action = Action(name = '&Open Data Set', action='open_data', accelerator='Ctrl+Shift+O')
 
   data_menu = Menu(
       clear_data_action,
@@ -103,13 +134,21 @@ class PlotOMaticHandler(Controller):
     uii.object.variables.clear()
 
   def save_data(self, uii):
-    filename = save_file(filter = 'Plot-o-matic data set (*.plot_data)|*.plot_data|All files (*)|*', file_name = 'my_data.plot_data')
+    filename = save_file(
+      wildcard = 'Plot-o-matic data set (*.plot_data)|*.plot_data|All files (*)|*',
+      file_name = 'my_data.plot_data',
+      message = 'Save data set'
+    )
     if filename != '':
       uii.object.variables.save_data_set(filename)
       print "Saved data set '%s'" % filename
 
   def open_data(self, uii):
-    filename = open_file(filter = 'Plot-o-matic data set (*.plot_data)|*.plot_data|All files (*)|*', file_name = 'my_data.plot_data')
+    filename = open_file(
+      wildcard = 'Plot-o-matic data set (*.plot_data)|*.plot_data|All files (*)|*',
+      file_name = 'my_data.plot_data',
+      message = 'Open data set'
+    )
     if filename != '':
       uii.object.variables.open_data_set(filename)
       print "Opened data set '%s'" % filename
