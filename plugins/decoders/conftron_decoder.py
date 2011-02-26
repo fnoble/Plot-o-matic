@@ -81,7 +81,7 @@ class ConftronDecoder(DataDecoder):
         if strerror == "File exists":
             pass
 
-    base_types = ['double', 'float', 'int8_t', 'int16_t', 'int32_t']
+    primitive_types = ['double', 'float', 'int8_t', 'int16_t', 'int32_t']
 
     file = open(self.ap_project_root+"/conftron/plot-o-matic_autogen/dict_of_struct.py",'w')
 
@@ -96,21 +96,21 @@ class ConftronDecoder(DataDecoder):
       file.write("  str_dict = {}\n")
 
       for member in struct:
-        # base types
-        if member['type'] in base_types:
-          file.write("  str_dict[\'"+member['name']+"\'] = struct."+member['name']+"  # base type "+member['type']+"\n")          
+        # primitive types
+        if member['type'] in primitive_types:
+          file.write("  str_dict[\'"+member['name']+"\'] = struct."+member['name']+"  # primitive type "+member['type']+"\n")          
         
-        # non-base types
+        # non-primitive types
         else:
           # scalars
           if member['array'] == None:
             file.write("  str_dict[\'"+member['name']+"\'] = "+member['type']+"(struct."+member['name']+")\n")
           # arrays
           elif len(member['array']) == 1:
-            file.write("  str_dict[\'"+member['name']+"\'] = ["+member['type']+"(_hoochie_momma) for _hoochie_momma in struct."+member['name']+"] # non-base array\n")
-          # don't handle non-base type tensors of order 2 or higher
+            file.write("  str_dict[\'"+member['name']+"\'] = ["+member['type']+"(_hoochie_momma) for _hoochie_momma in struct."+member['name']+"] # non-primitive array\n")
+          # don't handle non-primitive type tensors of order 2 or higher
           else:
-            print "Ignoring none-base type tensor:"
+            print "Ignoring none-primitive tensor:"
             print member
             file.write("  str_dict[\'"+member['name']+"\'] = None\n")
       file.write("  return str_dict\n")
