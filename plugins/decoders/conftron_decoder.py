@@ -128,7 +128,11 @@ class ConftronDecoder(DataDecoder):
     sys.path.append(self.ap_project_root+"/conftron/plot-o-matic_autogen")
 
     import dict_of_struct
-    amd = dict_of_struct.__dict__[message['type']](message['message'])
+    try:
+      amd = dict_of_struct.__dict__[message['type']](message['message'])
+    except TypeError as err:
+      print str(err)+", probably something in types.xml changed"
+      return None
 
     # re-enable this when pom can handle structs
     #return {message['name']:amd}
