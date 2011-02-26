@@ -98,6 +98,14 @@ class ConftronDriver(IODriver):
     if ret != None:
       return ret
 
+  def get_config(self):
+    return {'hi':'there'}
+
+  def set_config(self, config):
+    return None
+
+
+
 #  @on_trait_change('show_debug_messages')
 #  def change_port(self):
 #    self.rebind_socket()

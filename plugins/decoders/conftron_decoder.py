@@ -155,6 +155,11 @@ class ConftronDecoder(DataDecoder):
         bfd[top_name+"_"+name] = entry
     return bfd
 
+  def get_config(self):
+    return {'hi':'there'}
+
+  def set_config(self, config):
+    return None
 
 if __name__ == '__main__':
   cd = ConftronDecoder()
