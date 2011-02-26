@@ -75,8 +75,8 @@ def save_file(wildcard = '', dir = './saved_sessions', file_name = '', message =
 class PlotOMaticHandler(Controller):
   # ------------ Menu related --------------------
   exit_action = Action(name='&Exit', action='exit')
-  save_session_action = Action(name='&Open Session', action='open_session')
-  open_session_action = Action(name='&Save Session', action='save_session')
+  save_session_action = Action(name='&Open Session', action='open_session', accelerator='Ctrl+O')
+  open_session_action = Action(name='&Save Session', action='save_session', accelerator='Ctrl+S')
 
   file_menu = Menu(
       exit_action,
@@ -115,9 +115,9 @@ class PlotOMaticHandler(Controller):
       fp.close()
       uii.object.set_config(session)
   
-  clear_data_action = Action(name = '&Clear Data', action='clear_data')
-  save_data_action = Action(name = '&Save Data Set', action='save_data')
-  open_data_action = Action(name = '&Open Data Set', action='open_data')
+  clear_data_action = Action(name = '&Clear Data', action='clear_data', accelerator='Ctrl+W')
+  save_data_action = Action(name = '&Save Data Set', action='save_data', accelerator='Ctrl+Shift+S')
+  open_data_action = Action(name = '&Open Data Set', action='open_data', accelerator='Ctrl+Shift+O')
 
   data_menu = Menu(
       clear_data_action,
