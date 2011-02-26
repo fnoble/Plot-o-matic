@@ -72,7 +72,7 @@ class PlotOMaticHandler(Controller):
       print "Saving session as '%s'" % filename
       session = uii.object.get_config()
       fp = open(filename, 'w')
-      yaml.dump(session, fp, default_flow_style=False)
+      yaml.safe_dump(session, fp, default_flow_style=False)
       fp.close()
 
   def open_session(self, uii):
