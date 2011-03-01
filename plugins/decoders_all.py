@@ -7,5 +7,5 @@ from plugins.decoders.null_decoder import *
 from plugins.decoders.cstruct_decoder import *
 from plugins.decoders.jobysim_decoder import *
 from plugins.decoders.simpleplot import *
-from plugins.decoders.lcm_decoder import *
+from plugins.decoders.conftron_decoder import *
 #from plugins.decoders.paparazzi_ivy_decoder import *
