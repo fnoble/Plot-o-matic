@@ -5,4 +5,5 @@ from plugins.io_drivers.test import *
 from plugins.io_drivers.simple_file import *
 from plugins.io_drivers.udp import *
 from plugins.io_drivers.stdin import *
+from plugins.io_drivers.iload_mini import *
 #from plugins.io_drivers.ivy_driver import *
